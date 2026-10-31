@@ -239,6 +239,7 @@ body{font-size:clamp(15px,1.5vmin + 9px,19px)}
 @keyframes lf{0%,40%,100%{opacity:0}10%,50%{opacity:.85}}
 @keyframes gl{50%{opacity:.4}}.lamp{animation:gl 2s infinite}
 #dark{transition:opacity .6s}.storm #dark{opacity:.5}
+@media (min-width:760px) and (min-aspect-ratio:1/1) and (max-height:760px){#panel [data-pg=q] p.mut{display:none}}
 </style>
 </head>
 <body>
@@ -259,7 +260,7 @@ body{font-size:clamp(15px,1.5vmin + 9px,19px)}
 <g id="port" style="transition:opacity .5s"></g>
 <rect y="214" width="800" height="106" fill="url(#sea)"/>
 <g opacity=".5"><path class="w1" id="wa" fill="#fff"/></g>
-<g id="amb"></g><g id="ship" style="transform:translate(400px,240px)"><g id="flipg" style="transition:transform .45s ease-in-out"><g id="esc"></g><g id="bob"><g id="hl" style="transition:transform .9s cubic-bezier(.3,1.5,.5,1)">
+<g id="amb"></g><g id="g2rv"></g><g id="ship" style="transform:translate(400px,240px)"><g id="flipg" style="transition:transform .45s ease-in-out"><g id="esc"></g><g id="bob"><g id="hl" style="transition:transform .9s cubic-bezier(.3,1.5,.5,1)">
 <g id="hlart"></g><g id="bar"></g></g></g></g></g>
 <g id="fx"></g>
 <path class="w2" id="wb" fill="#0c5d83" opacity=".75"/><path class="w3" id="wc" fill="#073e5f" opacity=".85"/>
@@ -326,7 +327,7 @@ $('wa').setAttribute('d',wv(214));$('wb').setAttribute('d',wv(262));$('wc').setA
 let S;
 const fmt=n=>Math.round(n).toLocaleString('he-IL')+' ₪';
 const bp=(i,l)=>GOODS[i].b*MU[l][i];
-const newPrices=()=>GOODS.map((g,i)=>Math.round(bp(i,S.loc)*R(1-g.v,1+g.v)));
+const newPrices=()=>GOODS.map((g,i)=>Math.round(bp(i,S.loc)*R(1-g.v,1+g.v)*((typeof G2!=='undefined'&&G2&&G2.on&&G2.imp&&G2.imp[S.loc])?G2.imp[S.loc][i]:1)));
 const load=()=>GOODS.reduce((s,g)=>s+S.cargo[g.k],0);
 const cargoVal=()=>GOODS.reduce((s,g,i)=>s+S.cargo[g.k]*S.prices[i],0);
 const wealth=()=>S.cash+S.bank+cargoVal();
@@ -457,11 +458,11 @@ async function pirateEnd(k){const pr=$('pr');if(k!='leave'){sfx('cannon');sfx('c
  else{pr.style.transition='transform 1.5s ease-in';pr.style.transform='translate(1000px,240px)';await sleep(1400)}
  await sleep(500);$('fx').innerHTML='';setMode('sail');amb('sail')}
 async function evPirate(n){setMode('tense');amb('cut');sfx('warn');await pirateIn();await banner('שודדי ים!',700);await cutscene(n);
- let w=Math.min(.95,.25+.1*n);const tr=Math.round(wealth()*.1);
- const c=await choose('🏴‍☠️ שודדי ים!',`ספינת שודדים חוסמת את הדרך. איתך ${n} ספינות משמר.`,[['⚔️ להילחם',`סיכוי ניצחון ${Math.round(w*100)}%`],['💰 לשלם כופר',fmt(tr)],['🏃 לברוח','45% הצלחה']]);
+ let w=Math.min(.97,.25+.1*n+gunWin());const tr=Math.round(wealth()*.1);
+ const c=await choose('🏴‍☠️ שודדי ים!',`ספינת שודדים חוסמת את הדרך. איתך ${n} ספינות משמר.`,[['⚔️ להילחם',`סיכוי ניצחון ${Math.round(w*100)}%`],['💰 לשלם כופר',fmt(tr)],['🏃 לברוח',Math.round((.45+gunEsc())*100)+'% הצלחה']]);
  if(c==1){S.cash=Math.max(0,S.cash-tr);say(`שילמת כופר של ${fmt(tr)} והשודדים נעלמו.`);return pirateEnd('leave')}
- if(c==2){if(Math.random()<.45){say('הצלחת לברוח מהשודדים!','good');return pirateEnd('leave')}say('הבריחה נכשלה! הקרב בלתי נמנע.','bad');w-=.1}
- if(Math.random()<w){const r=Math.round(wealth()*R(.08,.16)*(1+n*.03));S.cash+=r;say(`ניצחת את השודדים! שלל: ${fmt(r)}.`,'good');await pirateEnd('win')}
+ if(c==2){if(Math.random()<.45+gunEsc()){say('הצלחת לברוח מהשודדים!','good');return pirateEnd('leave')}say('הבריחה נכשלה! הקרב בלתי נמנע.','bad');w-=.1}
+ if(Math.random()<w){const r=Math.round(wealth()*R(.08,.16)*(1+n*.03)*(1+.12*gunLv()));S.cash+=r;say(`ניצחת את השודדים! שלל: ${fmt(r)}.`,'good');await pirateEnd('win')}
  else{lose(.5);const l=Math.round(S.cash*.4);S.cash-=l;say(`השודדים ניצחו. איבדת חצי מהמטען ו־${fmt(l)}.`,'bad');await pirateEnd('lose')}}
 async function evStorm(){setMode('storm');amb('storm');sfx('thunder',.2);$('svg').classList.add('storm');$('bob').classList.add('rock');
  $('fx').innerHTML=Array.from({length:60},()=>`<line class="rn" x1="${R(0,840)}" y1="-30" x2="${R(0,840)-8}" y2="-10" style="animation-delay:${R(0,.5)}s"/>`).join('');
@@ -494,7 +495,7 @@ async function sail(dest,pre){if(S.busy||S.over||dest===S.loc)return;
  if(cost>S.cash){say(`אין לך ${fmt(cost)} ל־${n} ספינות משמר.`,'bad');return draw()}
  S.busy=true;S.extra=0;S.cash=Math.max(0,S.cash-cost-S.esc*60);sfx('anchor');sfx('sail',.9);amb('sail');setMode('sail');if(n)say(`שכרת ${n} ספינות משמר ב־${fmt(cost)}.`);
  const from=S.loc,e=ED[ei],rev=e[0]!==from,dir=SP[dest][2]>SP[from][2]?1:-1;window.__dir=dir;
- ensureSZ();const ev=((S.sz.includes(ei)&&Math.random()<.6)||(S.storm&&Math.random()<Math.min(.9,.5*e[3])))?'storm':Math.random()<.4*Math.pow(.85,n+S.esc)*e[2]*(hotEdge(ei)?1.6:1)?'pirate':Math.random()<.1?'wreck':Math.random()<.08?'leak':Math.random()<.16?'trader':null;
+ ensureSZ();const ev=((S.sz.includes(ei)&&Math.random()<.6)||(S.storm&&Math.random()<Math.min(.9,.5*e[3])))?'storm':Math.random()<.4*Math.pow(.85,n+S.esc)*e[2]*(hotEdge(ei)?1.6:1)*(S.sabo?2.4:1)*gunDet()?'pirate':Math.random()<.1?'wreck':Math.random()<.08?'leak':Math.random()<.16?'trader':null;
  window.scrollTo({top:0,behavior:'smooth'});draw();
  face(dir);let mv=manim(ei,rev,0,.5,2800);put(dir>0?980:-180,1);await sleep(1350);$('port').style.opacity=0;put(dir>0?-180:980,0);$('ship').getBoundingClientRect();put(400,1);await mv;
  if(ev){face(1);mmark(ei,rev,{storm:'⛈️',pirate:'🏴‍☠️',wreck:'🛟',leak:'💧',trader:'🚢'}[ev]);await({storm:evStorm,pirate:()=>evPirate(n+S.esc),wreck:evWreck,leak:evLeak,trader:evTrader}[ev])();$('mfx').innerHTML='';hud()}
@@ -849,7 +850,7 @@ const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'
 let OV=null;
 function ov(html,cls=''){closeOv();OV=document.createElement('div');OV.className='ov '+cls;OV.innerHTML=html;document.body.appendChild(OV);return OV}
 function closeOv(){if(OV){OV.remove();OV=null}}
-const snap=()=>({v:1,t:Date.now(),name:S.name||'סוחר',CAP,S:JSON.parse(JSON.stringify(S,(k,v)=>k=='trip'||k=='busy'?undefined:v))});
+const snap=()=>({v:1,t:Date.now(),name:S.name||'סוחר',CAP,S:JSON.parse(JSON.stringify(S,(k,v)=>k=='trip'||k=='busy'?undefined:v)),g2:g2snap()});
 function applySnap(sn){try{face(1)}catch(e){}S=Object.assign({},sn.S,{busy:false,trip:null,over:false,started:true});S.name=sn.name;CAP=sn.CAP||300;PREV=null;closeSheet();scene();setMode('port'+S.loc);amb('port');mapUpdate();qmark();draw();tab('mk')}
 const fmtD=t=>{try{return new Date(t).toLocaleDateString('he-IL')+' '+new Date(t).toLocaleTimeString('he-IL',{hour:'2-digit',minute:'2-digit'})}catch(e){return''}};
 const slotInfo=sn=>sn?`${esc(sn.name)} · יום ${sn.S.day}/${DAYS} · ${LOCS[sn.S.loc]}<small>הון ${fmt(sn.S.cash+sn.S.bank)} · ${fmtD(sn.t)}</small>`:'<span class="mut">ריק</span>';
@@ -900,7 +901,7 @@ function ensureX(){if(S&&S.hull==null)S.hull=100;if(!S||S.rep)return;const n=SP.
 {const _i=init;init=function(){_i();ensureX()}}
 {const _a=applySnap;applySnap=function(sn){_a(sn);ensureX();draw()}}
 const repLbl=r=>r>=3?'🤝 אהוב מאוד':r==2?'🌟 מכובד':r==1?'🙂 מוכר לטובה':r==0?'😐 לא מוכר':r==-1?'🤨 חשוד':r==-2?'😠 לא רצוי':'⛔ שנוא';
-const repMul=p=>{ensureX();return Math.max(.8,Math.min(1.2,1-.04*(S.rep[p]||0)))};
+const repMul=p=>{ensureX();return Math.min(1.35,Math.max(.8,Math.min(1.2,1-.04*(S.rep[p]||0)))*(1+g2burn(p)))};
 function addRep(p,n,quiet){ensureX();const o=S.rep[p];S.rep[p]=Math.max(-3,Math.min(3,o+n));if(S.rep[p]!==o&&!quiet){toast(`${n>0?'📈':'📉'} המוניטין שלך ב${LOCS[p]}: ${repLbl(S.rep[p])}${n>0&&S.rep[p]>0?` (קנייה בזול ב־${Math.round((1-repMul(p))*100)}%)`:''}`,n>0?'good':'warn')}}
 // trade hooks: rep price + volume-based reputation
 {const _t=trade;trade=function(i,m){ensureX();const o=S.prices[i],c0=S.cash;if(m==='b')S.prices[i]=Math.max(1,Math.round(o*repMul(S.loc)));try{_t(i,m)}finally{S.prices[i]=o}
@@ -1169,6 +1170,103 @@ function applyPT(){const P=$('panel');if(!P||typeof S!=='object'||!S||S.over||!S
  bar.innerHTML=[['m','🏪 שוק'],['q','📜 משימות וספינה']].map(([k,t])=>`<button class="${k===PT?'on':''}" onclick="setPT('${k}')">${t}</button>`).join('')}
 function setPT(k){PT=k;applyPT();const P=$('panel');if(P)P.scrollTop=0}
 {const _d2=draw;draw=function(){_d2();try{applyPT()}catch(e){}}}
+
+// ===== TWO PLAYERS (hot-seat, alternating voyages) =====
+var G2=null;
+const wealthOf=p=>Math.round(p.cash+p.bank+GOODS.reduce((s,g,i)=>s+(p.cargo[g.k]||0)*(p.prices[i]||0),0));
+function g2snap(){if(!G2||!G2.on)return null;G2.p[G2.cur]=S;return JSON.parse(JSON.stringify({cur:G2.cur,taken:G2.taken||{},imp:G2.imp,burn:G2.burn||{},tw:G2.tw,p:G2.p},(k,v)=>k=='trip'||k=='busy'?undefined:v))}
+function open2P(){const a=ST.get('p1','')||'',b=ST.get('p2','')||'';ov(`<div class="mcard" style="text-align:center"><h2>👥 שני שחקנים <button class="sm" onclick="backMenu()">✕</button></h2><p class="mut" style="font-size:14px">תור אחרי תור על אותו מכשיר: כל קפטן מפליג הפלגה, ואז מעבירים. 30 ימים לכל אחד, ומנצח מי שהונו גדול יותר.</p><input id="n1" maxlength="14" placeholder="שם קפטן 1" value="${esc(a)}" style="width:100%;box-sizing:border-box;margin:6px 0;padding:11px;border-radius:12px;border:2px solid #cfd8e0;font:inherit;font-weight:700;text-align:center"><input id="n2" maxlength="14" placeholder="שם קפטן 2" value="${esc(b)}" style="width:100%;box-sizing:border-box;margin:6px 0;padding:11px;border-radius:12px;border:2px solid #cfd8e0;font:inherit;font-weight:700;text-align:center"><button class="mb2 play" style="width:100%;margin-top:8px" onclick="start2P()">▶ התחילו</button></div>`,'dim')}
+function start2P(){const n1=(($('n1')||{}).value||'קפטן 1').trim().slice(0,14)||'קפטן 1',n2=(($('n2')||{}).value||'קפטן 2').trim().slice(0,14)||'קפטן 2';ST.set('p1',n1);ST.set('p2',n2);closeOv();unlock();G2=null;
+ const mk=nm=>{init();S.started=true;S.name=nm;ensureX();S.rival.loc=-1;return S};
+ const a=mk(n1),b=JSON.parse(JSON.stringify(a));b.name=n2;G2={on:true,cur:0,p:[a,b],imp:{},tw:null};S=a;CAP=SHIPS[S.lv][1];try{face(1)}catch(e){}PREV=null;closeSheet();scene();setMode('port'+S.loc);amb('port');mapUpdate();qmark();hud();tab('mk');draw();
+ say(`תור של ${n1}. בהצלחה!`);toast(`👥 ${esc(n1)} נגד ${esc(n2)}. תור ראשון: ${esc(n1)}`,'good');speak(`${n1} ו${n2}, שיהיה בהצלחה. התור הראשון של ${n1}.`,'joy');sfx('fanfare')}
+{const _sn=startNew;startNew=function(){G2=null;_sn()}}
+{const _a=applySnap;applySnap=function(sn){if(sn&&sn.g2){const g=sn.g2;G2={on:true,cur:g.cur,taken:g.taken||{},imp:g.imp||{},burn:g.burn||{},tw:g.tw==null?null:g.tw,p:g.p.map(x=>Object.assign({},x,{busy:false,trip:null,started:true}))};_a(Object.assign({},sn,{S:G2.p[G2.cur]}));G2.p[G2.cur]=S}else{G2=null;_a(sn)}}}
+{const _m=mainMenu;mainMenu=function(g){_m(g);if(!g&&OV&&!OV.querySelector('#b2p')){const p=OV.querySelector('.play');if(p)p.insertAdjacentHTML('afterend','<button id="b2p" class="mb2 sec" onclick="open2P()">👥 שני שחקנים · תור אחרי תור</button>')}}}
+try{if(typeof OV!=='undefined'&&OV&&!OV.querySelector('#b2p')){const p=OV.querySelector('.play');if(p)p.insertAdjacentHTML('afterend','<button id="b2p" class="mb2 sec" onclick="open2P()">👥 שני שחקנים · תור אחרי תור</button>')}}catch(e){}
+{const _r=rivalTurn;rivalTurn=function(d){if(G2&&G2.on)return;return _r(d)}}
+{const _rh=rivalHtml;rivalHtml=function(){if(G2&&G2.on){const o=G2.p[1-G2.cur];if(!o||o.over)return'';const p=SP[o.loc];return`<g class="mb"><text x="${p[2]+14}" y="${p[3]-14}" font-size="20">🚢</text></g><text x="${p[2]+14}" y="${p[3]-26}" font-size="9" font-weight="800" fill="#fff" stroke="#5a1f8a" stroke-width="2.6" paint-order="stroke">${esc(o.name)}</text>`}return _rh()}}
+{const _h=hud;hud=function(){_h();if(G2&&G2.on&&S){const hd=$('hud');if(hd)hd.insertAdjacentHTML('afterbegin',`<span class="pill" style="background:#7a3dd0;color:#fff">👤 ${esc(S.name)}</span>`)}}}
+function g2StoryCard(){ensureX();const M=S.map,o=G2.p[1-G2.cur],me=wealth(),ow=wealthOf(o),next=M.parts.find(p=>!M.got.includes(p));
+ const mapRow=M.done?`<div>🗺️ <b>המפה הקרועה:</b> האוצר נמצא ✔️</div>`:M.got.length>=3?`<div>🗺️ <b>המפה שלמה!</b> <button class="dest" style="margin-top:6px;width:100%" ${S.busy?'disabled':''} onclick="sailTreasure()">🏝️ הפלג לאי האוצר (3 ימים)</button></div>`:`<div>🗺️ <b>המפה הקרועה: ${M.got.length}/3</b><br><span class="mut">🧭 חלק נוסף נמצא ${CLUES[next]}.</span></div>`;
+ const tw=G2.tw!=null?`<div class="mut">🏝️ אוצר האי נמצא ע״י ${esc(G2.p[G2.tw].name)}.</div>`:'<div class="mut">🏝️ הראשון שימצא את אוצר האי מקבל בונוס 2,500 ₪.</div>';
+ return`<div class="card" style="border-color:#7a5a8a"><div class="row"><b>📖 העלילה</b><span class="mut">${repLbl(S.rep[S.loc])} ב${LOCS[S.loc]}</span></div>${mapRow}<div style="margin-top:6px">👤 <b>${esc(o.name)}</b> ${o.over?'סיים את המסע.':`נמצא ב${LOCS[o.loc]} · יום ${o.day}/${DAYS}`} · הון ${fmt(ow)} <span class="${me>=ow?'good':'bad'}">${me>=ow?'(אתה מקדים)':'(הוא מקדים)'}</span></div>${o.over?'':`<button class="dest" style="margin-top:6px;width:100%" ${S.busy?'disabled':''} onclick="g2Sabotage()">🏴‍☠️ שכור שודדים נגד ${esc(o.name)} · 800 ₪${o.sabo?' (כבר נשכרו)':''}</button>`}${tw}</div>`}
+{const _sc=storyCard;storyCard=function(){return G2&&G2.on?g2StoryCard():_sc()}}
+{const _se=storyEnd;storyEnd=function(){return G2&&G2.on?'':_se()}}
+function g2Sabotage(){if(!G2||!G2.on||S.busy)return;const o=G2.p[1-G2.cur];if(o.over)return;if(o.sabo){toast('השודדים כבר שכורים נגד היריב.','warn');return}if(S.cash<800){toast('אין מספיק כסף: 800 ₪ לשכירת שודדים.','bad');sfx('err');return}S.cash-=800;o.sabo=1;sfx('drum');toast(`🏴‍☠️ שכרת שודדים נגד ${esc(o.name)}. ההפלגה הבאה שלו מסוכנת יותר!`,'warn');say(`שכרת שודדים נגד ${o.name}.`);hud();draw()}
+{const _t=trade;trade=function(i,m){const g=GOODS[i],c0=S.cargo[g.k];_t(i,m);if(G2&&G2.on){const q=Math.abs(S.cargo[g.k]-c0);if(q>0){const a=G2.imp[S.loc]=G2.imp[S.loc]||[1,1,1,1,1];a[i]=m==='b'?Math.min(1.35,a[i]*(1+.003*q)):Math.max(.7,a[i]*(1-.003*q))}}}}
+{const _d=draw;draw=function(){if(G2&&G2.on&&S&&S.over){const P=$('panel');if(P)P.innerHTML='<div class="card" style="text-align:center"><h2>🏁 סיימת את המסע</h2><p class="mut">ממתינים לסיום המשחק.</p></div>';hud();return}_d()}}
+{const _st=sailTreasure;sailTreasure=async function(){const was=S.map&&S.map.done,d0=S.day;await _st();if(G2&&G2.on&&S.map&&S.map.done&&!was&&G2.tw==null){G2.tw=G2.cur;S.cash+=2500;hud();toast('🏆 הראשון שמצא את אוצר האי! בונוס 2,500 ₪','good')}if(G2&&G2.on&&!S.trip&&(S.day!==d0||S.over))await g2EndTurn()}}
+{const _s=sail;sail=async function(d,pre){const d0=S.day;const r=await _s(d,pre);if(G2&&G2.on&&!S.trip&&(S.day!==d0||S.over)){S.sabo=0;await g2EndTurn()}return r}}
+{const _g=goTrip;goTrip=async function(i){const d0=S.day;await _g(i);if(G2&&G2.on&&(S.day!==d0||S.over)){S.sabo=0;await g2EndTurn()}}}
+
+function g2burn(p){return(G2&&G2.on&&G2.burn&&G2.burn[p])?.03*Math.min(4,G2.burn[p][G2.cur]||0):0}
+{const _ar=addRep;addRep=function(p,n,q){_ar(p,n,q);if(G2&&G2.on&&n<0){G2.burn=G2.burn||{};const b=G2.burn[p]=G2.burn[p]||[0,0];b[1-G2.cur]+=Math.abs(n);if(!q)toast(`😈 פגעת בשם הטוב של ${LOCS[p]}: ${esc(G2.p[1-G2.cur].name)} ישלם יותר שם!`,'warn')}}}
+{const _op=openPort;openPort=function(i){_op(i);if(G2&&G2.on&&SHEET){const b=g2burn(i);if(b>0){const p=SHEET.querySelector('p.mut');if(p)p.insertAdjacentHTML('beforebegin',`<div class="chips"><span class="chip r">😈 היריב פגע בשם הטוב כאן: מחירי קנייה +${Math.round(b*100)}%</span></div>`)}}}}
+{const _st2=sailTreasure;sailTreasure=async function(){if(G2&&G2.on&&G2.tw!=null&&G2.tw!==G2.cur){toast(`🏝️ האוצר כבר נלקח ע״י ${esc(G2.p[G2.tw].name)}.`,'bad');return}return _st2()}}
+async function g2EndTurn(){if(G2.ending)return;G2.ending=1;try{while(S.dying)await sleep(250);const me=G2.cur,o=1-me;G2.p[me]=S;
+ Object.keys(G2.imp).forEach(k=>G2.imp[k]=G2.imp[k].map(v=>1+(v-1)*.8));if(G2.burn)Object.keys(G2.burn).forEach(k=>G2.burn[k]=G2.burn[k].map(v=>v*.85));
+ if(S.over&&G2.p[o].over)return g2Final();
+ if(G2.p[o].over)return;
+ await g2Handover(o)}finally{G2.ending=0}}
+function g2Handover(next){return new Promise(res=>{const prev=G2.p[G2.cur];G2.cur=next;S=G2.p[next];CAP=SHIPS[S.lv][1];S.busy=false;S.trip=null;try{face(1)}catch(e){}PREV=null;closeSheet();scene();setMode('port'+S.loc);amb('port');mapUpdate();qmark();hud();tab('mk');draw();
+ try{ST.set('auto',snap())}catch(e){}
+ const msg=prev.over?`${esc(prev.name)} סיים את המסע ${prev.sunk?'(הספינה טבעה)':prev.bankrupt?'(פשט רגל)':''}.`:`${esc(prev.name)} הפליג והגיע ל${LOCS[prev.loc]} (יום ${prev.day}/${DAYS}).`;
+ const o=ov(`<div class="mcard" style="text-align:center"><h2>🔄 תור של ${esc(S.name)}</h2><p>${msg}</p><p class="mut">העבירו את המכשיר ל־<b>${esc(S.name)}</b>.<br>אתה ב${LOCS[S.loc]} · יום ${S.day}/${DAYS} · הון ${fmt(wealth())}${S.sabo?'<br>⚠️ שכרו נגדך שודדים: ההפלגה הבאה מסוכנת!':''}</p><button class="mb2 play" id="g2go" style="width:100%">▶ אני מוכן</button></div>`,'dim');
+ sfx('horn');speak(`תור של ${S.name}.`,'wise');const b=o.querySelector('#g2go');b.onclick=()=>{closeOv();res()}})}
+function g2Final(){const a=G2.p[0],b=G2.p[1],lost=p=>p.sunk||p.bankrupt,wa=wealthOf(a),wb=wealthOf(b);
+ [a,b].forEach(p=>{if(!lost(p)){const t=S;S=p;try{addScore()}catch(e){}S=t}});
+ let win=null;if(lost(a)&&!lost(b))win=b;else if(lost(b)&&!lost(a))win=a;else if(wa>wb)win=a;else if(wb>wa)win=b;
+ const row=p=>`<tr class="${p===win?'me':''}"><td>${p===win?'🏆':''}</td><td>${esc(p.name)}</td><td>${fmt(wealthOf(p))}</td><td class="mut">${p.sunk?'🌊 טבע':p.bankrupt?'💸 פשט רגל':'יום '+Math.min(p.day,DAYS)}</td></tr>`;
+ G2.on=false;sfx('fanfare');speak(win?`${win.name} ניצח במסע הסוחרים!`:'תיקו! שני הקפטנים שווים.','joy');
+ ov(`<div class="mcard" style="text-align:center"><h2>🏁 סוף המסע</h2><p style="font-size:20px"><b>${win?'🏆 '+esc(win.name)+' ניצח!':'🤝 תיקו!'}</b></p><table class="tbl" style="width:100%">${row(a)}${row(b)}</table><div class="mrow" style="margin-top:12px"><button class="mb2 play" onclick="open2P()">🔁 משחק חוזר</button><button class="mb2" onclick="mainMenu(false)">☰ תפריט</button></div></div>`,'dim')}
+
+var G2COL=[{hull:'#7a4524',hull2:'#4a2a14',trim:'#f0c75e',flag:'#d93a3a',coat:'#b8322a'},{hull:'#2b4a7a',hull2:'#18284a',trim:'#7fdcf0',flag:'#2a7fd9',coat:'#2a6fc9',sail:'#f2f8ff',sail2:'#c4d8ee'}];
+function g2mini(p,i,sc){return `<g transform="scale(${sc})">${ship(p.lv||0,Object.assign({},G2COL[i]))}</g>`}
+function g2chip(i){const p=G2.p[i],act=G2.cur===i,w=wealthOf(p);return `<span class="g2c" style="display:inline-flex;align-items:center;gap:4px;padding:2px 8px 2px 4px;border-radius:14px;font-size:11px;white-space:nowrap;color:#1b2a3a;background:${act?'#fff3c4':'rgba(255,255,255,.82)'};box-shadow:${act?'0 0 0 2px #f0b429':'0 1px 3px #0005'};"><svg width="40" height="30" viewBox="-95 -150 190 175" style="overflow:visible">${g2mini(p,i,1)}</svg><span style="line-height:1.1;text-align:right"><b>${esc(p.name)}</b>${act?' ◀':''}<br><small>${fmt(w)} ₪ · ${p.over?'סיים':'יום '+Math.min(p.day,DAYS)}</small></span></span>`}
+{const _h=hud;hud=function(){_h();if(G2&&G2.on&&S){const hd=$('hud');if(hd){let bar=$('g2duo');if(!bar){bar=document.createElement('div');bar.id='g2duo';bar.style.cssText='position:absolute;left:8px;bottom:8px;display:flex;gap:6px;z-index:6;pointer-events:none';hd.parentElement.appendChild(bar)}bar.innerHTML=g2chip(0)+g2chip(1)}const rv=$('g2rv');if(rv){const o=G2.p[1-G2.cur];rv.innerHTML=(o&&!o.over&&o.loc===S.loc&&!S.trip)?`<g transform="translate(660,268) scale(.5)" opacity=".95">${ship(o.lv||0,Object.assign({},G2COL[1-G2.cur]))}</g><text x="660" y="290" font-size="11" font-weight="800" text-anchor="middle" fill="#fff" stroke="#1b3a6b" stroke-width="3" paint-order="stroke">${esc(o.name)}</text>`:''}const m=$('msf');if(m){m.innerHTML=`<g class="mb"><g transform="translate(0,6) scale(.3)">${ship(S.lv||0,Object.assign({},G2COL[G2.cur]))}</g></g>`}}}}
+{const _rh2=rivalHtml;rivalHtml=function(){if(G2&&G2.on){const i=1-G2.cur,o=G2.p[i];if(!o||o.over)return'';const p=SP[o.loc];return `<g transform="translate(${p[2]+20},${p[3]-6}) scale(.3)"><g class="mb">${ship(o.lv||0,Object.assign({},G2COL[i]))}</g></g><text x="${p[2]+20}" y="${p[3]-26}" font-size="9" text-anchor="middle" font-weight="800" fill="#fff" stroke="#1b3a6b" stroke-width="2.6" paint-order="stroke">${esc(o.name)}</text>`}return _rh2()}}
+
+var GUNS=[['תותחים קלים',0],['תותחי ברונזה',2500],['תותחים כבדים',7000],['קולברינות',16000],['תותחי ענק',32000]];
+function gunLv(){return Math.max(0,Math.min(4,(S&&S.gun)|0))}
+function gunWin(){return .06*gunLv()+.04*((S&&S.lv)|0)}
+function gunEsc(){return .04*gunLv()+.03*((S&&S.lv)|0)}
+function gunDet(){return Math.max(.45,1-.07*gunLv()-.04*((S&&S.lv)|0))}
+function gunCard(){const L=gunLv(),N=GUNS[L+1],base=Math.min(97,Math.round((.35+gunWin())*100));return `<div class="card" style="padding:4px 10px"><div class="row"><span style="font-size:12px"><b>💣 ${GUNS[L][0]}</b> <span class="mut" style="font-size:10.5px">→ ${N?N[0]:''}</span> ${'💥'.repeat(L+1)}<br><span class="mut" style="font-size:10.5px">קרב ~${base}% · בריחה ${Math.round((.45+gunEsc())*100)}% · התקפות −${Math.round((1-gunDet())*100)}%</span></span>${N?`<button class="a" style="padding:3px 8px" ${S.busy?'disabled':''} onclick="upgradeGun()" title="${N[0]}">🔫 ${fmt(N[1])}</button>`:'<span class="good">🏆 מקסימלי</span>'}</div></div>`}
+function upgradeGun(){if(S.busy)return;const L=gunLv(),N=GUNS[L+1];if(!N)return;if(S.cash<N[1]){say(`צריך ${fmt(N[1])} כדי לשדרג חימוש.`,'bad');return draw()}S.cash-=N[1];S.gun=L+1;sfx('upgrade');sfx('cannon',.2);say(`🔫 התקנת ${N[0]}! סיכויי הקרב מול שודדים השתפרו.`,'good');hud();draw()}
+{const _y=yard;yard=function(){return _y()+gunCard()}}
+
+// ===== חוזים עם נמלים =====
+function ctRng(seed){let a=seed>>>0;return()=>{a=(a+0x6D2B79F5)>>>0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function ctEnsure(){if(!S.ct)S.ct={act:[],done:0,failed:0}}
+function ctEpoch(){return Math.floor((S.day-1)/4)}
+function ctBoard(port){const ep=ctEpoch(),rnd=ctRng(port*7919+ep*104729+17),out=[];const used=new Set();
+ for(let i=0;i<3;i++){let t;do{t=Math.floor(rnd()*SP.length)}while(t===port||used.has(t));used.add(t);
+  const gi=Math.floor(rnd()*5),V=(500+ep*450)*(.7+rnd()*.9),q=Math.max(5,Math.min(Math.round(CAP*.4/5)*5,(x=>x>=10?Math.round(x/5)*5:Math.max(1,Math.round(x)))(V/Math.max(1,bp(gi,t))))),d=Math.max(1,Math.round(kmBetween(port,t)/430)),
+   dl=ep*4+1+d*2+5+Math.floor(rnd()*4),risk=(GOODS[gi].p||0),mult=1.25+rnd()*.35,rew=Math.round((q*bp(gi,t)*mult+300)/10)*10,dep=Math.max(50,Math.min(500,Math.round(rew*.05/10)*10));
+  out.push({id:port+':'+ep+':'+i,f:port,t,gi,q,dl,rew,dep})}return out}
+function ctTaken(id){return(G2&&G2.on&&G2.taken&&G2.taken[id]!=null&&G2.taken[id]!==G2.cur)?G2.p[G2.taken[id]].name:null}
+function ctMax(){return S.lv>=2?3:2}
+function ctAccept(id){if(S.busy)return;ctEnsure();const o=ctBoard(S.loc).find(x=>x.id===id);if(!o)return;
+ if(S.ct.act.some(a=>a.id===id))return;if(ctTaken(id)){toast('החוזה כבר נלקח על ידי היריב.','warn');return draw()}
+ if(S.ct.act.length>=ctMax()){toast(`אפשר לשאת עד ${ctMax()} חוזים פעילים.`,'warn');return}
+ if(S.cash<o.dep){toast(`אין מספיק כסף לפיקדון: ${fmt(o.dep)}.`,'bad');sfx('err');return}
+ S.cash-=o.dep;S.ct.act.push(o);if(G2&&G2.on){G2.taken=G2.taken||{};G2.taken[id]=G2.cur}
+ sfx('jingle');toast(`📋 חתמת על חוזה ל${LOCS[o.t]}. פיקדון ${fmt(o.dep)}.`,'good');say(`חתמת על חוזה: ${o.q} טון ${GOODS[o.gi].n} ל${LOCS[o.t]} עד יום ${o.dl}.`,'good');hud();qmark();draw()}
+function ctDeliver(id){if(S.busy)return;ctEnsure();const i=S.ct.act.findIndex(a=>a.id===id);if(i<0)return;const c=S.ct.act[i],g=GOODS[c.gi];
+ if(S.loc!==c.t)return;if(S.cargo[g.k]<c.q){say(`חסר מטען: צריך ${c.q} טון ${g.n}.`,'bad');return draw()}
+ S.cargo[g.k]-=c.q;const late=S.day>c.dl;if(late){S.ct.act.splice(i,1);S.ct.failed++;addRep(c.f,-1);toast('⏰ איחרת! החוזה בוטל והפיקדון אבד.','bad');hud();qmark();return draw()}
+ S.cash+=c.rew+c.dep;S.ct.act.splice(i,1);S.ct.done++;addRep(c.f,1,true);addRep(c.t,1);sfx('jingle');sfx('cash',.4);coins&&0;
+ toast(`✅ החוזה הושלם! קיבלת ${fmt(c.rew)} + החזר פיקדון.`,'good');say(`החוזה הושלם: ${fmt(c.rew)}.`,'good');speak('החוזה הושלם. הלקוח מרוצה.','joy');hud();qmark();draw()}
+function ctCheck(){if(!S||!S.ct)return;const keep=[];S.ct.act.forEach(c=>{if(S.day>c.dl+0){S.ct.failed++;addRep(c.f,-1,true);toast(`⏰ החוזה ל${LOCS[c.t]} פג. הפיקדון אבד.`,'bad');say(`החוזה ל${LOCS[c.t]} פג.`,'bad')}else keep.push(c)});S.ct.act=keep}
+function contractCard(){ctEnsure();ctCheck();const act=S.ct.act,bd=ctBoard(S.loc);
+ const ar=act.map(c=>{const g=GOODS[c.gi],have=S.cargo[g.k],left=c.dl-S.day,at=S.loc===c.t,ok=have>=c.q;return `<div class="row" style="padding:2px 0;font-size:12px"><span>${g.e} <b>${c.q}</b> טון ${g.n} → <b>${EM[c.t]} ${LOCS[c.t]}</b><br><span class="mut">עד יום ${c.dl} (${left} ימים) · במחסן ${have}/${c.q} · פרס ${fmt(c.rew)}</span></span>${at?`<button class="s" ${ok&&!S.busy?'':'disabled'} onclick="ctDeliver('${c.id}')">📦 מסור</button>`:''}</div>`}).join('');
+ const br=bd.filter(o=>!act.some(a=>a.id===o.id)).map(o=>{const g=GOODS[o.gi],tk=ctTaken(o.id);return `<div class="row" style="padding:1px 0;font-size:11.5px;${tk?'opacity:.55':''}"><span>${g.e} ${o.q}ט׳ → ${EM[o.t]} ${LOCS[o.t]} · יום ${o.dl} · <b>${fmt(o.rew)}</b></span>${tk?`<span class="mut">נלקח: ${esc(tk)}</span>`:`<button class="a" style="padding:2px 8px" ${S.busy?'disabled':''} onclick="ctAccept('${o.id}')">✍️ ${fmt(o.dep)}</button>`}</div>`}).join('');
+ return `<div class="card" style="border-color:#e0a21b;padding:6px 10px"><b>📋 חוזים (${act.length}/${ctMax()})</b> <span class="mut" style="font-size:11px">· הושלמו ${S.ct.done}</span>${ar||'<div class="mut" style="font-size:12px">אין חוזים פעילים.</div>'}<div style="border-top:1px dashed #cdbb8c;margin-top:3px;padding-top:2px"><span class="mut" style="font-size:11px">לוח החוזים של ${LOCS[S.loc]} · כפתור = פיקדון</span>${br||'<div class="mut" style="font-size:12px">אין הצעות.</div>'}</div></div>`}
+questCard=function(){return contractCard()};
+{const _nq=newQuest;newQuest=function(){S.quest=null}}
+{const _d=draw;draw=function(){try{ctCheck()}catch(e){}_d()}}
+{const _qm=qmark;qmark=function(){_qm();const e=$('qs');if(e&&S&&S.ct){e.insertAdjacentHTML('beforeend',S.ct.act.map(c=>`<g class="mb"><text x="${SP[c.t][2]+16}" y="${SP[c.t][3]-14}" font-size="22">⭐</text></g>`).join(''))}}}
 </script>
 </body>
 </html>
