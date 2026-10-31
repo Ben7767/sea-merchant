@@ -909,6 +909,23 @@ function repairShip(){if(S.busy||S.over)return;const need=repairCost();if(need<=
 {const _se=storyEnd;storyEnd=function(){if(S.sunk)return`<p><b>🌊 נשכח בים</b></p><p class="mut">הספינה טבעה אחרי שהמצב שלה ירד לאפס. תיקון במספנה בזמן מציל את המסע. 🧔 ואסקו סיים עם ${fmt(rivalWealth())}.</p>`;
  if(S.bankrupt)return`<p><b>💸 פשטת רגל</b></p><p class="mut">אזל הכסף והסחורה. להתחיל בקטן ולא להסתכן יותר מדי עוזר. 🧔 ואסקו סיים עם ${fmt(rivalWealth())}.</p>`;return _se()}}
 
+// ===== ANDROID APP: native Hebrew text-to-speech bridge =====
+if(window.AndroidTTS){
+ window.__ttsDone={};
+ const ttsState=()=>{try{return AndroidTTS.status()}catch(e){return'init'}};
+ hebVoices=function(){return ttsState()==='ok'?[{name:'Google (Android)',lang:'he-IL',localService:true}]:[]};
+ pickVoice=function(){const v=hebVoices();return v[0]||null};
+ speak=function(t,mood='calm'){return new Promise(res=>{if(!AU.voice||!A())return res();
+  const st=ttsState();if(st!=='ok'){if(st==='nohe'&&!window.__ttsWarned){window.__ttsWarned=1;setTimeout(()=>toast('🗣️ אין קול עברי בטלפון. לחץ על 🎧 ← "פתח הגדרות דיבור" כדי להתקין.','warn'),800)}return res()}
+  const [r0,p0]=MOOD[mood]||MOOD.calm,id='u'+Date.now()+Math.floor(Math.random()*1e4);duck(true);
+  let fin=false;const done=()=>{if(fin)return;fin=true;delete __ttsDone[id];duck(false);res()};__ttsDone[id]=done;
+  try{AndroidTTS.speak(t,Math.max(.5,Math.min(1.6,1+(p0-1)*.5)),Math.max(.6,Math.min(1.5,.96+(r0-1)*.6)),Math.min(1,AU.vv),id)}catch(e){return done()}
+  setTimeout(done,t.length*110+2500)})};
+ {const _tg=tgl;tgl=function(k){_tg(k);if(k=='voice'&&!AU.voice){try{AndroidTTS.stop()}catch(e){}}}}
+ {const _oa=openAudio;openAudio=function(){_oa();const c=OV&&OV.querySelector('.mcard');if(!c)return;const st=ttsState();
+  c.insertAdjacentHTML('beforeend',`<p class="${st==='ok'?'good':'bad'}" style="margin:8px 0 0">${st==='ok'?'✓ קול עברי של אנדרואיד פעיל.':st==='nohe'?'לא נמצא קול עברי בטלפון. התקן אותו דרך הכפתור ואז חזור למשחק.':'מכין את הקול...'}</p><button class="sm" style="margin-top:8px" onclick="try{AndroidTTS.openSettings()}catch(e){}">⚙️ פתח הגדרות דיבור</button> <button class="sm" style="margin-top:8px" onclick="speak('שלום קפטן! ברוך הבא על הסיפון.','joy')">🔊 נסה קול</button>`)}}
+}
+
 // ===== ZOOM =====
 let ZM=1;
 const baseW=()=>{const c=$('mapbox');const cw=c.clientWidth,ch=c.clientHeight;return Math.max(cw,Math.min(ch*800/382,cw*2.4))};
