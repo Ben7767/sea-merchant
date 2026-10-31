@@ -2,15 +2,30 @@ plugins { id 'com.android.application' }
 
 android {
     namespace 'com.seamerchant.game'
-    compileSdk 34
+    compileSdk 36
     defaultConfig {
         applicationId 'com.seamerchant.game'
         minSdk 24
-        targetSdk 34
+        targetSdk 36
         versionCode 1
         versionName '1.0'
     }
-    buildTypes { release { minifyEnabled false } }
+    signingConfigs {
+        release {
+            if (System.getenv("KEYSTORE_FILE")) {
+                storeFile file(System.getenv("KEYSTORE_FILE"))
+                storePassword System.getenv("KEYSTORE_PASSWORD")
+                keyAlias System.getenv("KEY_ALIAS")
+                keyPassword System.getenv("KEY_PASSWORD")
+            }
+        }
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            if (System.getenv("KEYSTORE_FILE")) { signingConfig signingConfigs.release }
+        }
+    }
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
