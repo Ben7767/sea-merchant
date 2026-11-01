@@ -1,0 +1,39 @@
+plugins { id 'com.android.application' }
+
+def gAppId = project.findProperty('appId') ?: 'com.seamerchant.game'
+def gAppName = project.findProperty('appName') ?: 'Merchant Voyage'
+def gVerCode = (project.findProperty('verCode') ?: '1') as int
+def gVerName = project.findProperty('verName') ?: '1.0'
+
+android {
+    namespace 'com.seamerchant.game'
+    compileSdk 36
+    defaultConfig {
+        applicationId gAppId
+        resValue 'string', 'app_name', gAppName
+        minSdk 24
+        targetSdk 36
+        versionCode gVerCode
+        versionName gVerName
+    }
+    signingConfigs {
+        release {
+            if (System.getenv("KEYSTORE_FILE")) {
+                storeFile file(System.getenv("KEYSTORE_FILE"))
+                storePassword System.getenv("KEYSTORE_PASSWORD")
+                keyAlias System.getenv("KEY_ALIAS")
+                keyPassword System.getenv("KEY_PASSWORD")
+            }
+        }
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            if (System.getenv("KEYSTORE_FILE")) { signingConfig signingConfigs.release }
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}

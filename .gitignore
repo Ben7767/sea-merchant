@@ -1,0 +1,14 @@
+# מפתחות חתימה וסיסמאות: לעולם לא עולים ל־git
+*.jks
+*.keystore
+*.p12
+*secrets*
+keystore.properties
+local.properties
+.gradle/
+build/
+.idea/
+node_modules/
+dist/
+*.apk
+*.aab

@@ -1,0 +1,28 @@
+{
+  "name": "sea-merchant",
+  "productName": "Merchant Voyage",
+  "version": "1.0.0",
+  "description": "מסע הסוחרים - משחק סחר בים התיכון",
+  "author": "Tech4U",
+  "main": "main.js",
+  "scripts": { "start": "electron .", "dist": "electron-builder --win" },
+  "devDependencies": { "electron": "^33.2.0", "electron-builder": "^25.1.8" },
+  "build": {
+    "appId": "com.tech4u.seamerchant",
+    "productName": "Merchant Voyage",
+    "copyright": "Tech4U",
+    "files": ["main.js", "index.html", "build/icon.png"],
+    "win": {
+      "target": [{ "target": "nsis", "arch": ["x64"] }, { "target": "portable", "arch": ["x64"] }],
+      "icon": "build/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Merchant Voyage"
+    },
+    "artifactName": "MerchantVoyage-${version}-${target}.${ext}"
+  }
+}
