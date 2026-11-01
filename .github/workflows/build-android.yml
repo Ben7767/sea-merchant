@@ -25,7 +25,7 @@ jobs:
           set -a; . games/${{ matrix.game }}/game.env; set +a
           mkdir -p android/app/src/main/assets
           cp games/${{ matrix.game }}/index.html android/app/src/main/assets/index.html
-          echo "GRADLE_ARGS=-PappId=$APP_ID -PappName=$APP_NAME -PverCode=$VERSION_CODE -PverName=$VERSION_NAME" >> "$GITHUB_ENV"
+          { echo "G_ID=$APP_ID"; echo "G_NAME=$APP_NAME"; echo "G_VC=$VERSION_CODE"; echo "G_VN=$VERSION_NAME"; } >> "$GITHUB_ENV"
       - name: Decode upload keystore (only if secrets exist)
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
@@ -41,14 +41,14 @@ jobs:
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
-          if [ -n "$KEYSTORE_FILE" ]; then gradle assembleRelease $GRADLE_ARGS --no-daemon; else gradle assembleDebug $GRADLE_ARGS --no-daemon; fi
+          if [ -n "$KEYSTORE_FILE" ]; then gradle assembleRelease -PappId="$G_ID" -PappName="$G_NAME" -PverCode="$G_VC" -PverName="$G_VN" --no-daemon; else gradle assembleDebug -PappId="$G_ID" -PappName="$G_NAME" -PverCode="$G_VC" -PverName="$G_VN" --no-daemon; fi
       - name: Build AAB (for Google Play)
         working-directory: android
         env:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
-        run: gradle bundleRelease $GRADLE_ARGS --no-daemon
+        run: gradle bundleRelease -PappId="$G_ID" -PappName="$G_NAME" -PverCode="$G_VC" -PverName="$G_VN" --no-daemon
       - uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.game }}-apk
