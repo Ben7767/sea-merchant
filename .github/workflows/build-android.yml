@@ -2,6 +2,8 @@ name: Build Android (APK + AAB)
 on:
   push:
   workflow_dispatch:
+permissions:
+  contents: write
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -57,3 +59,12 @@ jobs:
         with:
           name: ${{ matrix.game }}-aab
           path: android/app/build/outputs/bundle/release/*.aab
+      - name: Publish APK + AAB as a GitHub Release
+        if: github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp android/app/build/outputs/apk/*/*.apk "${{ matrix.game }}.apk"
+          cp android/app/build/outputs/bundle/release/*.aab "${{ matrix.game }}.aab"
+          TAG="build-${{ matrix.game }}-${{ github.run_number }}"
+          gh release create "$TAG" "${{ matrix.game }}.apk" "${{ matrix.game }}.aab" --title "$TAG" --notes "APK + AAB (commit ${GITHUB_SHA::7})"
