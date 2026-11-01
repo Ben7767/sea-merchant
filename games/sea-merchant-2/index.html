@@ -257,7 +257,7 @@ body.mmopen>*:not(.ov):not(script){visibility:hidden!important}
 .glt{animation:glt 3.4s ease-in-out infinite alternate}@keyframes glt{from{opacity:.25;transform:scaleX(.7)}to{opacity:1;transform:scaleX(1.1)}}.glt{transform-box:fill-box;transform-origin:center}
 .spr{animation:sprA 1.4s ease-out infinite;transform-box:fill-box;transform-origin:center}@keyframes sprA{0%{transform:translate(0,0) scale(.4);opacity:.95}100%{transform:translate(12px,-15px) scale(1.3);opacity:0}}
 </style>
-<style>#bnet{display:none!important}</style></head>
+<style>#bnet{display:none!important}</style><style>/* menu: static scene, no infinite layer animations (fixes flicker on phones) */.mmscene .ml,.mmscene .ml *{animation:none!important}.mmscene{contain:paint}.mmc input{will-change:auto}</style></head>
 <body>
 <div class="w">
 <div class="sc" id="scw">
