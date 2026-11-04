@@ -257,7 +257,7 @@ body.mmopen>*:not(.ov):not(script){visibility:hidden!important}
 .glt{animation:glt 3.4s ease-in-out infinite alternate}@keyframes glt{from{opacity:.25;transform:scaleX(.7)}to{opacity:1;transform:scaleX(1.1)}}.glt{transform-box:fill-box;transform-origin:center}
 .spr{animation:sprA 1.4s ease-out infinite;transform-box:fill-box;transform-origin:center}@keyframes sprA{0%{transform:translate(0,0) scale(.4);opacity:.95}100%{transform:translate(12px,-15px) scale(1.3);opacity:0}}
 </style>
-<style>#bnet{display:none!important}</style><style>/* menu: static scene, no infinite layer animations (fixes flicker on phones) */.mmscene .ml,.mmscene .ml *{animation:none!important}.mmscene{contain:paint}.mmc input{will-change:auto}</style></head>
+<style>#bnet{display:none!important}</style><style>/* menu: static scene, no infinite layer animations (fixes flicker on phones) */.mmscene .ml,.mmscene .ml *{animation:none!important}.mmscene{contain:paint}.mmc input{will-change:auto}#prefl{transition:opacity .5s}</style></head>
 <body>
 <div class="w">
 <div class="sc" id="scw">
@@ -516,11 +516,11 @@ async function sail(dest,pre){if(S.busy||S.over||dest===S.loc)return;
  const from=S.loc,e=ED[ei],rev=e[0]!==from,dir=SP[dest][2]>SP[from][2]?1:-1;window.__dir=dir;
  ensureSZ();const ev=((S.sz.includes(ei)&&Math.random()<.6)||(S.storm&&Math.random()<Math.min(.9,.5*e[3])))?'storm':Math.random()<.4*Math.pow(.85,n+S.esc)*e[2]*(hotEdge(ei)?1.6:1)*(S.sabo?2.4:1)*gunDet()*wevPir()?'pirate':Math.random()<.1?'wreck':Math.random()<.08?'leak':Math.random()<.16?'trader':null;
  window.scrollTo({top:0,behavior:'smooth'});draw();
- face(dir);let mv=manim(ei,rev,0,.5,2800);put(dir>0?980:-180,1);await sleep(1350);$('port').style.opacity=0;put(dir>0?-180:980,0);$('ship').getBoundingClientRect();put(400,1);await mv;
+ face(dir);let mv=manim(ei,rev,0,.5,2800);put(dir>0?980:-180,1);await sleep(1350);$('port').style.opacity=0;$('prefl').style.opacity=0;put(dir>0?-180:980,0);$('ship').getBoundingClientRect();put(400,1);await mv;
  if(ev){face(1);mmark(ei,rev,{storm:'⛈️',pirate:'🏴‍☠️',wreck:'🛟',leak:'💧',trader:'🚢'}[ev]);await({storm:evStorm,pirate:()=>evPirate(n+S.esc),wreck:evWreck,leak:evLeak,trader:evTrader}[ev])();$('mfx').innerHTML='';hud()}
  face(dir);mv=manim(ei,rev,.5,1,2800);put(dir>0?980:-180,1);await sleep(1350);
  S.loc=dest;S.day+=days(ei)+S.extra;if(S.tipPort===dest){S.tipPort=-1;toast(S.tipLie?'😒 ואסקו שיקר לך! כאן המחירים רגילים.':'💰 הרמז היה נכון! בדוק את המחירים כאן.',S.tipLie?'warn':'good');S.tipLie=false}if(S.bank>0)S.bank+=Math.round(S.bank*.005*days(ei));
- await portView(dest);scene();put(dir>0?-180:980,0);$('ship').getBoundingClientRect();put(400,1);$('port').style.opacity=1;sfx('arrive');setMode('port'+S.loc);amb('port');banner(EM[dest]+' '+LOCS[dest],1700);await mv;
+ await portView(dest);scene();put(dir>0?-180:980,0);$('ship').getBoundingClientRect();put(400,1);$('port').style.opacity=1;$('prefl').style.opacity=1;sfx('arrive');setMode('port'+S.loc);amb('port');banner(EM[dest]+' '+LOCS[dest],1700);await mv;
  if(S.quest&&S.day>S.quest.dl){say('משימת הסחר פגה. מוצעת לך משימה חדשה.','bad');questPen();newQuest()}S.storm=Math.random()<(wevHas('storm')?.6:.2);rollStorms();S.prices=newPrices();markSeen();say(`יום ${S.day}: הגעת ל${LOCS[dest]}.${S.storm?' אזהרת סערה!':''}`);hud();
  if(Math.random()<.12)await evCustoms();await arriveStory(dest);
  S.busy=false;if(S.day>=DAYS){S.over=true;sfx(wealth()>12000?'fanfare':'defeat')}scene();const P=$('panel');P.classList.add('enter');draw();setTimeout(()=>P.classList.remove('enter'),900)}
