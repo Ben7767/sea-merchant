@@ -520,7 +520,7 @@ async function sail(dest,pre){if(S.busy||S.over||dest===S.loc)return;
  if(ev){face(1);mmark(ei,rev,{storm:'⛈️',pirate:'🏴‍☠️',wreck:'🛟',leak:'💧',trader:'🚢'}[ev]);await({storm:evStorm,pirate:()=>evPirate(n+S.esc),wreck:evWreck,leak:evLeak,trader:evTrader}[ev])();$('mfx').innerHTML='';hud()}
  face(dir);mv=manim(ei,rev,.5,1,2800);put(dir>0?980:-180,1);await sleep(1350);
  S.loc=dest;S.day+=days(ei)+S.extra;if(S.tipPort===dest){S.tipPort=-1;toast(S.tipLie?'😒 ואסקו שיקר לך! כאן המחירים רגילים.':'💰 הרמז היה נכון! בדוק את המחירים כאן.',S.tipLie?'warn':'good');S.tipLie=false}if(S.bank>0)S.bank+=Math.round(S.bank*.005*days(ei));
- await portView(dest);scene();put(dir>0?-180:980,0);$('ship').getBoundingClientRect();put(400,1);$('port').style.opacity=1;$('prefl').style.opacity=1;sfx('arrive');setMode('port'+S.loc);amb('port');banner(EM[dest]+' '+LOCS[dest],1700);await mv;
+ await portView(dest);scene();put(dir>0?-180:980,0);{const po=$('port'),pr=$('prefl');po.style.transition=pr.style.transition='none';po.style.opacity=1;pr.style.opacity=1;po.getBoundingClientRect();await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));po.style.transition=pr.style.transition='';}put(400,1);sfx('arrive');setMode('port'+S.loc);amb('port');banner(EM[dest]+' '+LOCS[dest],1700);await mv;
  if(S.quest&&S.day>S.quest.dl){say('משימת הסחר פגה. מוצעת לך משימה חדשה.','bad');questPen();newQuest()}S.storm=Math.random()<(wevHas('storm')?.6:.2);rollStorms();S.prices=newPrices();markSeen();say(`יום ${S.day}: הגעת ל${LOCS[dest]}.${S.storm?' אזהרת סערה!':''}`);hud();
  if(Math.random()<.12)await evCustoms();await arriveStory(dest);
  S.busy=false;if(S.day>=DAYS){S.over=true;sfx(wealth()>12000?'fanfare':'defeat')}scene();const P=$('panel');P.classList.add('enter');draw();setTimeout(()=>P.classList.remove('enter'),900)}
@@ -1635,13 +1635,13 @@ async function paintStrokes(src,w,h,brushes,opts){opts=opts||{};const out=docume
  return out}
 const toBlob=(cv)=>new Promise(r=>cv.toBlob(r,'image/webp',.9));
 function bakePort(i){if(PIMG[i]||PIMG['p'+i])return PBAKE;PIMG['p'+i]=1;PBAKE=PBAKE.then(async()=>{try{
-  const g=paintPort(i);const W=1000,H=270;const doc='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 216" width="'+W+'" height="'+H+'"><defs>'+DABDEF+'</defs>'+g+'</svg>';
+  await bkY(1);const g=paintPort(i);const W=1000,H=270;const doc='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 216" width="'+W+'" height="'+H+'"><defs>'+DABDEF+'</defs>'+g+'</svg>';
   const im=new Image();await new Promise((res,rej)=>{im.onload=res;im.onerror=rej;im.src='data:image/svg+xml;base64,'+btoa(unescape(encodeURIComponent(doc)))});
   const cs=document.createElement('canvas');cs.width=W;cs.height=H;cs.getContext('2d').drawImage(im,0,0,W,H);
-  const out=await paintStrokes(cs,W,H,[10,5.5,3.4],{seed:i+1,thr:1.1,flat:-.5});
+  const out=await paintStrokes(cs,W,H,[10,5.5,3.4],{seed:i+1,thr:1.1,flat:-.5});await bkY(1);
   const rh=90,rs=document.createElement('canvas');rs.width=W;rs.height=rh;const rc=rs.getContext('2d');for(let y=0;y<rh;y++){const sy=H-1-Math.floor(y*1.15),off=Math.sin(y*.55+i)*(2+y*.07);rc.drawImage(out,0,sy,W,1,off,y,W,1)}
   rc.globalCompositeOperation='destination-in';const gr=rc.createLinearGradient(0,0,0,rh);gr.addColorStop(0,'rgba(0,0,0,.62)');gr.addColorStop(1,'rgba(0,0,0,0)');rc.fillStyle=gr;rc.fillRect(0,0,W,rh);
-  rc.globalCompositeOperation='source-over';{const hd='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 72" width="'+W+'" height="'+rh+'">'+harborSVG(i)+'</svg>';const hi=new Image();await new Promise((res,rej)=>{hi.onload=res;hi.onerror=rej;hi.src='data:image/svg+xml;base64,'+btoa(unescape(encodeURIComponent(hd)))});rc.drawImage(hi,0,0,W,rh)}
+  rc.globalCompositeOperation='source-over';await bkY(1);{const hd='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 72" width="'+W+'" height="'+rh+'">'+harborSVG(i)+'</svg>';const hi=new Image();await new Promise((res,rej)=>{hi.onload=res;hi.onerror=rej;hi.src='data:image/svg+xml;base64,'+btoa(unescape(encodeURIComponent(hd)))});rc.drawImage(hi,0,0,W,rh)}
   const rf=await paintStrokes(rs,W,rh,[7,3.6],{seed:i+50,horiz:0,flat:-.1});
   const b1=await toBlob(out),b2=await toBlob(rf);PIMG[i]=URL.createObjectURL(b1);RIMG[i]=URL.createObjectURL(b2);PORTS[i]=`<image x="0" y="0" width="800" height="216" href="${PIMG[i]}"/>`;
   try{if(S&&S.loc===i&&$('port')&&$('port').firstElementChild&&$('port').firstElementChild.tagName==='image'){$('port').firstElementChild.setAttribute('href',PIMG[i]);$('prefl').innerHTML=reflFor(i)}}catch(e){}
