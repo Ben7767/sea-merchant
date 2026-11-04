@@ -1621,13 +1621,14 @@ for(let i=0;i<PORTS.length;i++)PORTS[i]=imgify(paintPort(i));
 
 // ===== ציור שמן אמיתי: כל נמל מצויר פעם אחת במכחול (משיכות לפי כיוון הקצוות) =====
 const PIMG={},RIMG={};let PBAKE=Promise.resolve();
+async function bkY(f){const t=performance.now();if(!f&&t-(bkY.t||0)<6)return;while(typeof S!=='undefined'&&S&&(S.busy||document.hidden))await new Promise(r=>setTimeout(r,250));await new Promise(r=>setTimeout(r,10));bkY.t=performance.now()}
 async function paintStrokes(src,w,h,brushes,opts){opts=opts||{};const out=document.createElement('canvas');out.width=w;out.height=h;const c=out.getContext('2d');
- const sd=src.getContext('2d').getImageData(0,0,w,h).data;const lum=new Float32Array(w*h);for(let i=0;i<w*h;i++)lum[i]=.3*sd[i*4]+.59*sd[i*4+1]+.11*sd[i*4+2];
- const bl=new Float32Array(w*h),tmp=new Float32Array(w*h),rr=3;for(let y=0;y<h;y++){let a=0;for(let x=-rr;x<=rr;x++)a+=lum[y*w+Math.max(0,Math.min(w-1,x))];for(let x=0;x<w;x++){tmp[y*w+x]=a/(2*rr+1);a+=lum[y*w+Math.min(w-1,x+rr+1)]-lum[y*w+Math.max(0,x-rr)]}}
- for(let x=0;x<w;x++){let a=0;for(let y=-rr;y<=rr;y++)a+=tmp[Math.max(0,Math.min(h-1,y))*w+x];for(let y=0;y<h;y++){bl[y*w+x]=a/(2*rr+1);a+=tmp[Math.min(h-1,y+rr+1)*w+x]-tmp[Math.max(0,y-rr)*w+x]}}
+ await bkY(1);const sd=src.getContext('2d').getImageData(0,0,w,h).data;await bkY(1);const lum=new Float32Array(w*h);for(let i=0;i<w*h;i++)lum[i]=.3*sd[i*4]+.59*sd[i*4+1]+.11*sd[i*4+2];
+ await bkY(1);const bl=new Float32Array(w*h),tmp=new Float32Array(w*h),rr=3;for(let y=0;y<h;y++){let a=0;for(let x=-rr;x<=rr;x++)a+=lum[y*w+Math.max(0,Math.min(w-1,x))];for(let x=0;x<w;x++){tmp[y*w+x]=a/(2*rr+1);a+=lum[y*w+Math.min(w-1,x+rr+1)]-lum[y*w+Math.max(0,x-rr)]}}
+ await bkY(1);for(let x=0;x<w;x++){let a=0;for(let y=-rr;y<=rr;y++)a+=tmp[Math.max(0,Math.min(h-1,y))*w+x];for(let y=0;y<h;y++){bl[y*w+x]=a/(2*rr+1);a+=tmp[Math.min(h-1,y+rr+1)*w+x]-tmp[Math.max(0,y-rr)*w+x]}}
  const rng=netMul(7+(opts.seed||1));c.filter='blur(2px)';c.drawImage(src,0,0);c.filter='none';c.lineCap='round';
  for(let bi=0;bi<brushes.length;bi++){const b=brushes[bi],step=b*.6,pts=[];for(let y=b*.5;y<h;y+=step)for(let x=b*.5;x<w;x+=step)pts.push([x+(rng()-.5)*step,y+(rng()-.5)*step]);for(let i=pts.length-1;i>0;i--){const j=Math.floor(rng()*(i+1));[pts[i],pts[j]]=[pts[j],pts[i]]}
-  c.lineWidth=b;let n=0;for(const [x,y] of pts){if(++n%6000===0)await new Promise(r=>setTimeout(r,0));const xi=Math.max(1,Math.min(w-2,x|0)),yi=Math.max(1,Math.min(h-2,y|0)),k=(yi*w+xi)*4;if(sd[k+3]<30)continue;
+  c.lineWidth=b;let n=0;for(const [x,y] of pts){if(++n%150===0)await bkY();const xi=Math.max(1,Math.min(w-2,x|0)),yi=Math.max(1,Math.min(h-2,y|0)),k=(yi*w+xi)*4;if(sd[k+3]<30)continue;
    const gx=bl[yi*w+xi+1]-bl[yi*w+xi-1],gy=bl[(yi+1)*w+xi]-bl[(yi-1)*w+xi],mg=Math.hypot(gx,gy);if(bi>=2&&mg<(opts.thr||1.2))continue;
    let a=mg>.6?Math.atan2(gy,gx)+Math.PI/2:(opts.flat==null?-.5:opts.flat)+(rng()-.5)*.5;if(opts.horiz)a=(rng()-.5)*.12;const L=b*(1.5+rng()*1.6),dx=Math.cos(a)*L/2,dy=Math.sin(a)*L/2,v=(rng()-.5)*20;
    c.strokeStyle=`rgba(${Math.max(0,Math.min(255,sd[k]+v))|0},${Math.max(0,Math.min(255,sd[k+1]+v*.8))|0},${Math.max(0,Math.min(255,sd[k+2]+v*.6))|0},${sd[k+3]>200?.95:sd[k+3]/255})`;c.beginPath();c.moveTo(x-dx,y-dy);c.lineTo(x+dx,y+dy);c.stroke()}}
