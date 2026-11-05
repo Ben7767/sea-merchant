@@ -1,0 +1,15 @@
+{
+  "rules": {
+    "rooms": {
+      "$code": {
+        ".read": true,
+        ".write": true,
+        ".validate": "$code.matches(/^[a-z0-9]{4}$/)",
+        "meta": { ".validate": "newData.hasChildren(['host'])" },
+        "peers": {
+          "$pid": { ".validate": "newData.child('app').val() === 'mv2'" }
+        }
+      }
+    }
+  }
+}

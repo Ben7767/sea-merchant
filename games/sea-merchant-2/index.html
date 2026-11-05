@@ -257,7 +257,7 @@ body.mmopen>*:not(.ov):not(script){visibility:hidden!important}
 .glt{animation:glt 3.4s ease-in-out infinite alternate}@keyframes glt{from{opacity:.25;transform:scaleX(.7)}to{opacity:1;transform:scaleX(1.1)}}.glt{transform-box:fill-box;transform-origin:center}
 .spr{animation:sprA 1.4s ease-out infinite;transform-box:fill-box;transform-origin:center}@keyframes sprA{0%{transform:translate(0,0) scale(.4);opacity:.95}100%{transform:translate(12px,-15px) scale(1.3);opacity:0}}
 </style>
-<style>#bnet{display:none!important}</style><style>/* menu: static scene, no infinite layer animations (fixes flicker on phones) */.mmscene .ml,.mmscene .ml *{animation:none!important}.mmscene{contain:paint}.mmc input{will-change:auto}#prefl{transition:opacity .5s}svg.still *{animation-play-state:paused!important}</style></head>
+<style>/* menu: static scene, no infinite layer animations (fixes flicker on phones) */.mmscene .ml,.mmscene .ml *{animation:none!important}.mmscene{contain:paint}.mmc input{will-change:auto}#prefl{transition:opacity .5s}svg.still *{animation-play-state:paused!important}</style></head>
 <body>
 <div class="w">
 <div class="sc" id="scw">
@@ -1192,59 +1192,70 @@ function setPT(k){PT=k;applyPT();const P=$('panel');if(P)P.scrollTop=0}
 
 // ===== TWO PLAYERS (hot-seat, alternating voyages) =====
 var G2=null;
+function g2rivs(){if(!G2||!G2.p)return[];const r=[];G2.p.forEach((p,i)=>{if(i!==G2.cur&&p)r.push(i)});return r}
+function g2rich(){const r=g2rivs(),a=r.filter(i=>!G2.p[i].over);const l=a.length?a:r;let b=l[0];l.forEach(i=>{if(wealthOf(G2.p[i])>wealthOf(G2.p[b]))b=i});return b}
 const wealthOf=p=>(p&&p.net)?p.rw:Math.round(p.cash+p.bank+GOODS.reduce((s,g,i)=>s+(p.cargo[g.k]||0)*(p.prices[i]||0),0)+assetVal(p));
 function g2snap(){if(!G2||!G2.on)return null;G2.p[G2.cur]=S;return JSON.parse(JSON.stringify({cur:G2.cur,own:G2.own||{},taken:G2.taken||{},imp:G2.imp,burn:G2.burn||{},tw:G2.tw,p:G2.p},(k,v)=>k=='trip'||k=='busy'?undefined:v))}
-function open2P(){const a=ST.get('p1','')||'',b=ST.get('p2','')||'';ov(`<div class="mcard" style="text-align:center"><h2>👥 שני שחקנים <button class="sm" onclick="backMenu()">✕</button></h2><p class="mut" style="font-size:14px">תור אחרי תור על אותו מכשיר: כל קפטן מפליג הפלגה, ואז מעבירים. 30 ימים לכל אחד, ומנצח מי שהונו גדול יותר.</p><input id="n1" maxlength="14" placeholder="שם קפטן 1" value="${esc(a)}" style="width:100%;box-sizing:border-box;margin:6px 0;padding:11px;border-radius:12px;border:2px solid #cfd8e0;font:inherit;font-weight:700;text-align:center"><input id="n2" maxlength="14" placeholder="שם קפטן 2" value="${esc(b)}" style="width:100%;box-sizing:border-box;margin:6px 0;padding:11px;border-radius:12px;border:2px solid #cfd8e0;font:inherit;font-weight:700;text-align:center"><button class="mb2 play" style="width:100%;margin-top:8px" onclick="start2P()">▶ התחילו</button></div>`,'dim')}
-function start2P(){const n1=(($('n1')||{}).value||'קפטן 1').trim().slice(0,14)||'קפטן 1',n2=(($('n2')||{}).value||'קפטן 2').trim().slice(0,14)||'קפטן 2';ST.set('p1',n1);ST.set('p2',n2);closeOv();unlock();G2=null;
- const mk=nm=>{init();S.started=true;S.name=nm;ensureX();S.rival.loc=-1;return S};
- const a=mk(n1),b=JSON.parse(JSON.stringify(a));b.name=n2;G2={on:true,cur:0,p:[a,b],imp:{},own:{},tw:null};S=a;CAP=SHIPS[S.lv][1];try{face(1)}catch(e){}PREV=null;closeSheet();scene();setMode('port'+S.loc);amb('port');mapUpdate();qmark();hud();tab('mk');draw();
- say(`תור של ${n1}. בהצלחה!`);toast(`👥 ${esc(n1)} נגד ${esc(n2)}. תור ראשון: ${esc(n1)}`,'good');speak(`${n1} ו${n2}, שיהיה בהצלחה. התור הראשון של ${n1}.`,'joy');sfx('fanfare')}
+var P2N=2;
+function p2set(n){P2N=n;[2,3,4].forEach(k=>{const b=$('pc'+k);if(b)b.style.outline=k===n?'3px solid #f0b429':'none'});[3,4].forEach(k=>{const e=$('n'+k);if(e)e.style.display=k<=n?'':'none'})}
+function open2P(){const v=k=>esc(ST.get('p'+k,'')||'');const inp=k=>`<input id="n${k}" maxlength="14" placeholder="שם קפטן ${k}" value="${v(k)}" style="width:100%;box-sizing:border-box;margin:6px 0;padding:11px;border-radius:12px;border:2px solid #cfd8e0;font:inherit;font-weight:700;text-align:center">`;
+ ov(`<div class="mcard" style="text-align:center"><h2>👥 כמה שחקנים על מכשיר אחד <button class="sm" onclick="backMenu()">✕</button></h2><p class="mut" style="font-size:14px">תור אחרי תור על אותו מכשיר: כל קפטן מפליג הפלגה, ואז מעבירים. 30 ימים לכל אחד, ומנצח מי שהונו גדול ביותר.</p><div class="mrow" style="margin:4px 0"><button id="pc2" class="mb2" onclick="p2set(2)">2</button><button id="pc3" class="mb2" onclick="p2set(3)">3</button><button id="pc4" class="mb2" onclick="p2set(4)">4</button></div>${inp(1)}${inp(2)}${inp(3)}${inp(4)}<button class="mb2 play" style="width:100%;margin-top:8px" onclick="start2P()">▶ התחילו</button></div>`,'dim');p2set(P2N)}
+function start2P(){const names=[];for(let k=1;k<=P2N;k++){const n=((($('n'+k)||{}).value||'').trim().slice(0,14))||('קפטן '+k);names.push(n);ST.set('p'+k,n)}closeOv();unlock();G2=null;
+ init();S.started=true;S.name=names[0];ensureX();S.rival.loc=-1;const a=S,P=[a];for(let k=1;k<names.length;k++){const b=JSON.parse(JSON.stringify(a));b.name=names[k];P.push(b)}
+ G2={on:true,cur:0,p:P,imp:{},own:{},tw:null};S=a;CAP=SHIPS[S.lv][1];try{face(1)}catch(e){}PREV=null;closeSheet();scene();setMode('port'+S.loc);amb('port');mapUpdate();qmark();hud();tab('mk');draw();
+ say(`תור של ${names[0]}. בהצלחה!`);toast(`👥 ${names.map(esc).join(' · ')}. תור ראשון: ${esc(names[0])}`,'good');speak(`${names.join(' ו')}, שיהיה בהצלחה. התור הראשון של ${names[0]}.`,'joy');sfx('fanfare')}
 {const _sn=startNew;startNew=function(){G2=null;_sn()}}
 {const _a=applySnap;applySnap=function(sn){if(sn&&sn.g2){const g=sn.g2;G2={on:true,cur:g.cur,own:g.own||{},taken:g.taken||{},imp:g.imp||{},burn:g.burn||{},tw:g.tw==null?null:g.tw,p:g.p.map(x=>Object.assign({},x,{busy:false,trip:null,started:true}))};_a(Object.assign({},sn,{S:G2.p[G2.cur]}));G2.p[G2.cur]=S}else{G2=null;_a(sn)}}}
-{const _m=mainMenu;mainMenu=function(g){_m(g);if(!g&&OV&&!OV.querySelector('#b2p')){const p=OV.querySelector('.play');if(p)p.insertAdjacentHTML('afterend','<button id="b2p" class="mb2 sec" onclick="open2P()">👥 שני שחקנים · תור אחרי תור</button>')}}}
-try{if(typeof OV!=='undefined'&&OV&&!OV.querySelector('#b2p')){const p=OV.querySelector('.play');if(p)p.insertAdjacentHTML('afterend','<button id="b2p" class="mb2 sec" onclick="open2P()">👥 שני שחקנים · תור אחרי תור</button>')}}catch(e){}
+{const _m=mainMenu;mainMenu=function(g){_m(g);if(!g&&OV&&!OV.querySelector('#b2p')){const p=OV.querySelector('.play');if(p)p.insertAdjacentHTML('afterend','<button id="b2p" class="mb2 sec" onclick="open2P()">👥 2–4 שחקנים · תור אחרי תור</button>')}}}
+try{if(typeof OV!=='undefined'&&OV&&!OV.querySelector('#b2p')){const p=OV.querySelector('.play');if(p)p.insertAdjacentHTML('afterend','<button id="b2p" class="mb2 sec" onclick="open2P()">👥 2–4 שחקנים · תור אחרי תור</button>')}}catch(e){}
 {const _r=rivalTurn;rivalTurn=function(d){if(G2&&G2.on)return;return _r(d)}}
 {const _rh=rivalHtml;rivalHtml=function(){if(G2&&G2.on){const o=G2.p[1-G2.cur];if(!o||o.over)return'';const p=SP[o.loc];return`<g class="mb"><text x="${p[2]+14}" y="${p[3]-14}" font-size="20">🚢</text></g><text x="${p[2]+14}" y="${p[3]-26}" font-size="9" font-weight="800" fill="#fff" stroke="#5a1f8a" stroke-width="2.6" paint-order="stroke">${esc(o.name)}</text>`}return _rh()}}
 {const _h=hud;hud=function(){_h();if(G2&&G2.on&&S){const hd=$('hud');if(hd)hd.insertAdjacentHTML('afterbegin',`<span class="pill" style="background:#7a3dd0;color:#fff">👤 ${esc(S.name)}</span>`)}}}
-function g2StoryCard(){ensureX();const M=S.map,o=G2.p[1-G2.cur],me=wealth(),ow=wealthOf(o),next=M.parts.find(p=>!M.got.includes(p));
+function g2StoryCard(){ensureX();const M=S.map,me=wealth(),next=M.parts.find(p=>!M.got.includes(p));
  const mapRow=M.done?`<div>🗺️ <b>המפה הקרועה:</b> האוצר נמצא ✔️</div>`:M.got.length>=3?`<div>🗺️ <b>המפה שלמה!</b> <button class="dest" style="margin-top:6px;width:100%" ${S.busy?'disabled':''} onclick="sailTreasure()">🏝️ הפלג לאי האוצר (3 ימים)</button></div>`:`<div>🗺️ <b>המפה הקרועה: ${M.got.length}/3</b><br><span class="mut">🧭 חלק נוסף נמצא ${CLUES[next]}.</span></div>`;
+ const rvh=g2rivs().map(i=>{const o=G2.p[i],ow=wealthOf(o);return `<div style="margin-top:6px">👤 <b style="color:${(G2COL[i]||{}).flag||'#333'}">${esc(o.name)}</b> ${o.over?'סיים את המסע.':`נמצא ב${LOCS[o.loc]} · יום ${o.day}/${DAYS}`} · הון ${fmt(ow)} <span class="${me>=ow?'good':'bad'}">${me>=ow?'(אתה מקדים)':'(הוא מקדים)'}</span></div>${o.over?'':`<button class="dest" style="margin-top:6px;width:100%" ${S.busy?'disabled':''} onclick="g2Sabotage(${i})">🏴‍☠️ שכור שודדים נגד ${esc(o.name)} · 800 ₪${o.sabo?' (כבר נשכרו)':''}</button>`}`}).join('');
  const tw=G2.tw!=null?`<div class="mut">🏝️ אוצר האי נמצא ע״י ${esc(G2.p[G2.tw].name)}.</div>`:'<div class="mut">🏝️ הראשון שימצא את אוצר האי מקבל בונוס 2,500 ₪.</div>';
- return`<div class="card" style="border-color:#7a5a8a"><div class="row"><b>📖 העלילה</b><span class="mut">${repLbl(S.rep[S.loc])} ב${LOCS[S.loc]}</span></div>${mapRow}<div style="margin-top:6px">👤 <b>${esc(o.name)}</b> ${o.over?'סיים את המסע.':`נמצא ב${LOCS[o.loc]} · יום ${o.day}/${DAYS}`} · הון ${fmt(ow)} <span class="${me>=ow?'good':'bad'}">${me>=ow?'(אתה מקדים)':'(הוא מקדים)'}</span></div>${o.over?'':`<button class="dest" style="margin-top:6px;width:100%" ${S.busy?'disabled':''} onclick="g2Sabotage()">🏴‍☠️ שכור שודדים נגד ${esc(o.name)} · 800 ₪${o.sabo?' (כבר נשכרו)':''}</button>`}${tw}</div>`}
+ return`<div class="card" style="border-color:#7a5a8a"><div class="row"><b>📖 העלילה</b><span class="mut">${repLbl(S.rep[S.loc])} ב${LOCS[S.loc]}</span></div>${mapRow}${rvh}${tw}</div>`}
 {const _sc=storyCard;storyCard=function(){return G2&&G2.on?g2StoryCard():_sc()}}
 {const _se=storyEnd;storyEnd=function(){return G2&&G2.on?'':_se()}}
-function g2Sabotage(){if(!G2||!G2.on||S.busy)return;const o=G2.p[1-G2.cur];if(o.over)return;if(o.sabo){toast('השודדים כבר שכורים נגד היריב.','warn');return}if(S.cash<800){toast('אין מספיק כסף: 800 ₪ לשכירת שודדים.','bad');sfx('err');return}S.cash-=800;o.sabo=1;netTell('sabo',{n:S.name});sfx('drum');toast(`🏴‍☠️ שכרת שודדים נגד ${esc(o.name)}. ההפלגה הבאה שלו מסוכנת יותר!`,'warn');say(`שכרת שודדים נגד ${o.name}.`);hud();draw()}
+function g2Sabotage(t){if(!G2||!G2.on||S.busy)return;if(t==null)t=g2rich();if(t===G2.cur||!G2.p[t])return;const o=G2.p[t];if(o.over)return;if(o.sabo){toast('השודדים כבר שכורים נגד היריב.','warn');return}if(S.cash<800){toast('אין מספיק כסף: 800 ₪ לשכירת שודדים.','bad');sfx('err');return}S.cash-=800;o.sabo=1;netTell('sabo',{n:S.name,to:t});sfx('drum');toast(`🏴‍☠️ שכרת שודדים נגד ${esc(o.name)}. ההפלגה הבאה שלו מסוכנת יותר!`,'warn');say(`שכרת שודדים נגד ${o.name}.`);hud();draw()}
 {const _t=trade;trade=function(i,m){const g=GOODS[i],c0=S.cargo[g.k];_t(i,m);if(G2&&G2.on){const q=Math.abs(S.cargo[g.k]-c0);if(q>0){const a=G2.imp[S.loc]=G2.imp[S.loc]||[1,1,1,1,1];a[i]=m==='b'?Math.min(1.35,a[i]*(1+.003*q)):Math.max(.7,a[i]*(1-.003*q))}}}}
-{const _d=draw;draw=function(){if(G2&&G2.on&&S&&S.over){const P=$('panel');if(P)P.innerHTML='<div class="card" style="text-align:center"><h2>🏁 סיימת את המסע</h2><p class="mut">'+(G2.net&&G2.p[1-G2.cur]?'ממתינים ל'+esc(G2.p[1-G2.cur].name)+' (יום '+Math.min(G2.p[1-G2.cur].day,DAYS)+'/'+DAYS+')':'ממתינים לסיום המשחק.')+'</p></div>';hud();return}_d()}}
+{const _d=draw;draw=function(){if(G2&&G2.on&&S&&S.over){const P=$('panel');if(P)P.innerHTML='<div class="card" style="text-align:center"><h2>🏁 סיימת את המסע</h2><p class="mut">'+(G2.net?g2rivs().filter(i=>!G2.p[i].over).map(i=>'ממתינים ל'+esc(G2.p[i].name)+' (יום '+Math.min(G2.p[i].day,DAYS)+'/'+DAYS+')').join('<br>')||'ממתינים לסיום המשחק.':'ממתינים לסיום המשחק.')+'</p></div>';hud();return}_d()}}
 {const _st=sailTreasure;sailTreasure=async function(){const was=S.map&&S.map.done,d0=S.day;await _st();if(G2&&G2.on&&S.map&&S.map.done&&!was&&G2.tw==null){G2.tw=G2.cur;netTell('tw',{});S.cash+=2500;hud();toast('🏆 הראשון שמצא את אוצר האי! בונוס 2,500 ₪','good')}if(G2&&G2.on&&!S.trip&&(S.day!==d0||S.over))await g2EndTurn()}}
 {const _s=sail;sail=async function(d,pre){const d0=S.day;if(!(await propGuard(d)))return;const r=await _s(d,pre);if(S.day!==d0&&!S.over){try{await propArrive(d0)}catch(e){console.error(e)}}if(G2&&G2.on&&!S.trip&&(S.day!==d0||S.over)){S.sabo=0;await g2EndTurn()}return r}}
 {const _g=goTrip;goTrip=async function(i){const d0=S.day;await _g(i);if(G2&&G2.on&&(S.day!==d0||S.over)){S.sabo=0;await g2EndTurn()}}}
 
 function g2burn(p){return(G2&&G2.on&&G2.burn&&G2.burn[p])?.03*Math.min(4,G2.burn[p][G2.cur]||0):0}
-{const _ar=addRep;addRep=function(p,n,q){_ar(p,n,q);if(G2&&G2.on&&n<0){G2.burn=G2.burn||{};const b=G2.burn[p]=G2.burn[p]||[0,0];b[1-G2.cur]+=Math.abs(n);if(!q)toast(`😈 פגעת בשם הטוב של ${LOCS[p]}: ${esc(G2.p[1-G2.cur].name)} ישלם יותר שם!`,'warn')}}}
+{const _ar=addRep;addRep=function(p,n,q){_ar(p,n,q);if(G2&&G2.on&&n<0){G2.burn=G2.burn||{};const b=G2.burn[p]=G2.burn[p]||[0,0,0,0];g2rivs().forEach(j=>{b[j]=(b[j]||0)+Math.abs(n)});if(!q)toast(`😈 פגעת בשם הטוב של ${LOCS[p]}: היריבים ישלמו יותר שם!`,'warn')}}}
 {const _op=openPort;openPort=function(i){_op(i);if(G2&&G2.on&&SHEET){const b=g2burn(i);if(b>0){const p=SHEET.querySelector('p.mut');if(p)p.insertAdjacentHTML('beforebegin',`<div class="chips"><span class="chip r">😈 היריב פגע בשם הטוב כאן: מחירי קנייה +${Math.round(b*100)}%</span></div>`)}}}}
 {const _st2=sailTreasure;sailTreasure=async function(){if(G2&&G2.on&&G2.tw!=null&&G2.tw!==G2.cur){toast(`🏝️ האוצר כבר נלקח ע״י ${esc(G2.p[G2.tw].name)}.`,'bad');return}return _st2()}}
-async function g2EndTurn(){if(G2.ending)return;G2.ending=1;try{while(S.dying)await sleep(250);const me=G2.cur,o=1-me;G2.p[me]=S;if(S.bankrupt){return g2Final()}
+async function g2EndTurn(){if(G2.ending)return;G2.ending=1;try{while(S.dying)await sleep(250);const me=G2.cur;G2.p[me]=S;if(S.bankrupt)S.over=1;
  Object.keys(G2.imp).forEach(k=>G2.imp[k]=G2.imp[k].map(v=>1+(v-1)*.8));if(G2.burn)Object.keys(G2.burn).forEach(k=>G2.burn[k]=G2.burn[k].map(v=>v*.85));
- if(S.over&&G2.p[o].over)return g2Final();
- if(G2.p[o].over)return;
- await g2Handover(o)}finally{G2.ending=0}}
+ const n=G2.p.length;if(n===2&&S.bankrupt)return g2Final();
+ let nx=-1;for(let k=1;k<n;k++){const j=(me+k)%n;if(!G2.p[j].over){nx=j;break}}
+ if(nx<0){if(S.over)return g2Final();return}
+ await g2Handover(nx)}finally{G2.ending=0}}
 function g2Handover(next){return new Promise(res=>{const prev=G2.p[G2.cur];G2.cur=next;S=G2.p[next];CAP=SHIPS[S.lv][1];S.busy=false;S.trip=null;try{face(1)}catch(e){}PREV=null;closeSheet();scene();setMode('port'+S.loc);amb('port');mapUpdate();qmark();hud();tab('mk');draw();
  try{ST.set('auto',snap())}catch(e){}
  const msg=prev.over?`${esc(prev.name)} סיים את המסע ${prev.sunk?'(הספינה טבעה)':prev.bankrupt?'(פשט רגל)':''}.`:`${esc(prev.name)} הפליג והגיע ל${LOCS[prev.loc]} (יום ${prev.day}/${DAYS}).`;
  const o=ov(`<div class="mcard" style="text-align:center"><h2>🔄 תור של ${esc(S.name)}</h2><p>${msg}</p>${pNewsHTML()}<p class="mut">העבירו את המכשיר ל־<b>${esc(S.name)}</b>.<br>אתה ב${LOCS[S.loc]} · יום ${S.day}/${DAYS} · הון ${fmt(wealth())}${S.sabo?'<br>⚠️ שכרו נגדך שודדים: ההפלגה הבאה מסוכנת!':''}</p><button class="mb2 play" id="g2go" style="width:100%">▶ אני מוכן</button></div>`,'dim');
  sfx('horn');speak(`תור של ${S.name}.`,'wise');const b=o.querySelector('#g2go');b.onclick=()=>{closeOv();res()}})}
-function g2Final(){const a=G2.p[0],b=G2.p[1],lost=p=>p.sunk||p.bankrupt||p.left,wa=wealthOf(a),wb=wealthOf(b);
- [a,b].forEach(p=>{if(!lost(p)&&!p.net){const t=S;S=p;try{addScore()}catch(e){}S=t}});
- let win=null;if(G2.kdm){win=G2.p[G2.kdm.w]}else if(lost(a)&&!lost(b))win=b;else if(lost(b)&&!lost(a))win=a;else if(wa>wb)win=a;else if(wb>wa)win=b;
+function g2Final(){const lost=p=>p.sunk||p.bankrupt||p.left,P=G2.p.slice();
+ P.forEach(p=>{if(!lost(p)&&!p.net){const t=S;S=p;try{addScore()}catch(e){}S=t}});
+ const rank=P.slice().sort((x,y)=>(lost(x)-lost(y))||(wealthOf(y)-wealthOf(x)));let win=null;
+ if(G2.kdm){win=G2.p[G2.kdm.w]}else{const t=rank[0],u=rank[1];if(t&&!lost(t)&&(!u||lost(u)||wealthOf(t)>wealthOf(u)))win=t;else if(t&&lost(t)&&P.length===1)win=null}
  const row=p=>`<tr class="${p===win?'me':''}"><td>${p===win?'🏆':''}</td><td>${esc(p.name)}</td><td>${fmt(wealthOf(p))}<br><small class="mut">נכסים ${fmt(assetVal(p))}</small></td><td class="mut">${p.sunk?'🌊 טבע':p.left?'🚪 עזב':p.bankrupt?'💸 פשט רגל':'יום '+Math.min(p.day,DAYS)}</td></tr>`;
- G2.on=false;sfx('fanfare');speak(win?`${win.name} ניצח במסע הסוחרים!`:'תיקו! שני הקפטנים שווים.','joy');
- ov(`<div class="mcard" style="text-align:center"><h2>🏁 סוף המסע</h2>${G2.kdm?`<p style="font-weight:800">👑 ${esc(G2.p[G2.kdm.w].name)} הגיע ל${KPATH[G2.kdm.path][1]} ובנה את הממלכה!</p>`:''}<p style="font-size:20px"><b>${win?'🏆 '+esc(win.name)+' ניצח!':'🤝 תיקו!'}</b></p><table class="tbl" style="width:100%">${row(a)}${row(b)}</table><div class="mrow" style="margin-top:12px"><button class="mb2 play" onclick="open2P()">🔁 משחק חוזר</button><button class="mb2" onclick="mainMenu(false)">☰ תפריט</button></div></div>`,'dim')}
+ G2.on=false;sfx('fanfare');speak(win?`${win.name} ניצח במסע הסוחרים!`:'תיקו! הקפטנים שווים.','joy');
+ ov(`<div class="mcard" style="text-align:center"><h2>🏁 סוף המסע</h2>${G2.kdm?`<p style="font-weight:800">👑 ${esc(G2.p[G2.kdm.w].name)} הגיע ל${KPATH[G2.kdm.path][1]} ובנה את הממלכה!</p>`:''}<p style="font-size:20px"><b>${win?'🏆 '+esc(win.name)+' ניצח!':'🤝 תיקו!'}</b></p><table class="tbl" style="width:100%">${rank.map(row).join('')}</table><div class="mrow" style="margin-top:12px"><button class="mb2 play" onclick="${G2.net?'netLobby()':'open2P()'}">🔁 משחק חוזר</button><button class="mb2" onclick="mainMenu(false)">☰ תפריט</button></div></div>`,'dim')}
 
-var G2COL=[{hull:'#7a4524',hull2:'#4a2a14',trim:'#f0c75e',flag:'#d93a3a',coat:'#b8322a'},{hull:'#2b4a7a',hull2:'#18284a',trim:'#7fdcf0',flag:'#2a7fd9',coat:'#2a6fc9',sail:'#f2f8ff',sail2:'#c4d8ee'}];
+
+
+var G2COL4=[{hull:'#2f7a4a',hull2:'#18482a',trim:'#e8f5a0',flag:'#2fae5a',coat:'#2a9a52'},{hull:'#8a5ac0',hull2:'#4a2a7a',trim:'#f0d0ff',flag:'#9a4ad9',coat:'#8a3fc9'}];
+var G2COL=[{hull:'#7a4524',hull2:'#4a2a14',trim:'#f0c75e',flag:'#d93a3a',coat:'#b8322a'},{hull:'#2b4a7a',hull2:'#18284a',trim:'#7fdcf0',flag:'#2a7fd9',coat:'#2a6fc9',sail:'#f2f8ff',sail2:'#c4d8ee'}].concat(G2COL4);
 function g2mini(p,i,sc){return `<g transform="scale(${sc})">${ship(p.lv||0,Object.assign({},G2COL[i]))}</g>`}
 function g2chip(i){const p=G2.p[i],act=G2.cur===i,w=wealthOf(p);return `<span class="g2c" style="display:inline-flex;align-items:center;gap:4px;padding:2px 8px 2px 4px;border-radius:14px;font-size:11px;white-space:nowrap;color:#1b2a3a;background:${act?'#fff3c4':'rgba(255,255,255,.82)'};box-shadow:${act?'0 0 0 2px #f0b429':'0 1px 3px #0005'};"><svg width="40" height="30" viewBox="-95 -150 190 175" style="overflow:visible">${g2mini(p,i,1)}</svg><span style="line-height:1.1;text-align:right"><b>${esc(p.name)}</b>${act?' ◀':''}<br><small>${fmt(w)} ₪ · ${p.over?'סיים':'יום '+Math.min(p.day,DAYS)}</small></span></span>`}
-{const _h=hud;hud=function(){_h();if(G2&&G2.on&&S){const hd=$('hud');if(hd){let bar=$('g2duo');if(!bar){bar=document.createElement('div');bar.id='g2duo';bar.style.cssText='position:absolute;left:8px;bottom:8px;display:flex;gap:6px;z-index:6;pointer-events:none';hd.parentElement.appendChild(bar)}bar.innerHTML=g2chip(0)+g2chip(1)}const rv=$('g2rv');if(rv){const o=G2.p[1-G2.cur];rv.innerHTML=(o&&!o.over&&o.loc===S.loc&&!S.trip)?`<g transform="translate(660,268) scale(.5)" opacity=".95">${ship(o.lv||0,Object.assign({},G2COL[1-G2.cur]))}</g><text x="660" y="290" font-size="11" font-weight="800" text-anchor="middle" fill="#fff" stroke="#1b3a6b" stroke-width="3" paint-order="stroke">${esc(o.name)}</text>`:''}const m=$('msf');if(m){m.innerHTML=`<g class="mb"><g transform="translate(0,6) scale(.3)">${ship(S.lv||0,Object.assign({},G2COL[G2.cur]))}</g></g>`}}}}
-{const _rh2=rivalHtml;rivalHtml=function(){if(G2&&G2.on){const i=1-G2.cur,o=G2.p[i];if(!o||o.over)return'';const p=SP[o.loc];return `<g transform="translate(${p[2]+20},${p[3]-6}) scale(.3)"><g class="mb">${ship(o.lv||0,Object.assign({},G2COL[i]))}</g></g><text x="${p[2]+20}" y="${p[3]-26}" font-size="9" text-anchor="middle" font-weight="800" fill="#fff" stroke="#1b3a6b" stroke-width="2.6" paint-order="stroke">${esc(o.name)}</text>`}return _rh2()}}
+{const _h=hud;hud=function(){_h();if(G2&&G2.on&&S){const hd=$('hud');if(hd){let bar=$('g2duo');if(!bar){bar=document.createElement('div');bar.id='g2duo';bar.style.cssText='position:absolute;left:8px;bottom:8px;display:flex;gap:6px;z-index:6;pointer-events:none';hd.parentElement.appendChild(bar)}bar.style.flexWrap='wrap';bar.style.maxWidth='70%';bar.innerHTML=G2.p.map((_,i)=>g2chip(i)).join('')}const rv=$('g2rv');if(rv){rv.innerHTML=g2rivs().map((i,k)=>{const o=G2.p[i],x=660-k*95;return(o&&!o.over&&o.loc===S.loc&&!S.trip)?`<g transform="translate(${x},268) scale(.5)" opacity=".95">${ship(o.lv||0,Object.assign({},G2COL[i]))}</g><text x="${x}" y="290" font-size="11" font-weight="800" text-anchor="middle" fill="#fff" stroke="#1b3a6b" stroke-width="3" paint-order="stroke">${esc(o.name)}</text>`:''}).join('')}const m=$('msf');if(m){m.innerHTML=`<g class="mb"><g transform="translate(0,6) scale(.3)">${ship(S.lv||0,Object.assign({},G2COL[G2.cur]))}</g></g>`}}}}
+{const _rh2=rivalHtml;rivalHtml=function(){if(G2&&G2.on&&!G2.net){return g2rivs().map((i,k)=>{const o=G2.p[i];if(!o||o.over)return'';const p=SP[o.loc];const dx=20+k*16;return `<g transform="translate(${p[2]+dx},${p[3]-6}) scale(.3)"><g class="mb">${ship(o.lv||0,Object.assign({},G2COL[i]))}</g></g><text x="${p[2]+dx}" y="${p[3]-26}" font-size="9" text-anchor="middle" font-weight="800" fill="#fff" stroke="#1b3a6b" stroke-width="2.6" paint-order="stroke">${esc(o.name)}</text>`}).join('')}return _rh2()}}
 
 var GUNS=[['תותחים קלים',0],['תותחי ברונזה',2500],['תותחים כבדים',7000],['קולברינות',16000],['תותחי ענק',32000]];
 function gunLv(){return Math.max(0,Math.min(4,(S&&S.gun)|0))}
@@ -1304,8 +1315,8 @@ function myIdx(){return G2&&G2.on?G2.cur:0}
 function setCount(o,reg){const m=ownMap();let n=0;for(let k=0;k<SP.length;k++){if(PRG[k]===reg&&m[k]&&m[k].o===o)n++}return n}
 function setMult(o,i){const n=setCount(o,PRG[i]);return n>=4?1.6:n>=3?1.25:1}
 function assetVal(p){if(!p)return 0;let idx=0,m;if(G2&&G2.own&&G2.p){idx=G2.p.indexOf(p);if(idx<0)idx=(p===S?G2.cur:0);m=G2.own}else m=p.own1;if(!m)return 0;let v=0;Object.keys(m).forEach(k=>{const e=m[k];if(e&&e.o===idx){v+=pPrice(+k)*.8;for(let r=1;r<=e.r;r++)v+=pRoomCost(+k,r)*.7;if(e.a)Object.keys(e.a).forEach(x=>{if(e.a[x]&&AMEN[x])v+=AMEN[x][1]*.7});if(e.m)v-=Math.round(e.m*1.12)}});return Math.round(v)}
-function ownCol(o){return o===1?'#2a7fd9':'#c9892b'}
-function pNews(t){if(G2&&G2.net){netTell('news',{x:t.replace(/&[a-z]+;/g,'')});return}if(G2&&G2.on){const r=G2.p[1-G2.cur];if(r){r.news=(r.news||[]).concat(t)}}}
+function ownCol(o){return ['#c9892b','#2a7fd9','#2fae5a','#9a4ad9'][o]||'#2a7fd9'}
+function pNews(t){if(G2&&G2.net){netTell('news',{x:t.replace(/&[a-z]+;/g,'')});return}if(G2&&G2.on){g2rivs().forEach(j=>{const r=G2.p[j];if(r&&!r.net)r.news=(r.news||[]).concat(t)})}}
 function pNewsHTML(){const n=S.news||[];S.news=[];return n.length?`<div style="background:#fff3d6;border:2px solid #e0a82e;border-radius:10px;padding:6px 10px;margin:6px 0;font-weight:700">${n.map(x=>`<div>${x}</div>`).join('')}</div>`:''}
 function propBuy(){if(S.busy)return;const i=S.loc,m=ownMap();if(m[i])return;const c=pPrice(i);if(S.cash<c){toast(`אין מספיק כסף: ${fmt(c)}.`,'bad');sfx('err');return}
  S.cash-=c;m[i]={o:myIdx(),r:0,pd:c};pNews(`🏴 ${esc(S.name)} רכש את נמל ${LOCS[i]} ב־${fmt(c)}!`);try{renderHotel(true)}catch(e){}sfx('jingle');sfx('cash',.4);toast(`🏴 קנית את נמל ${LOCS[i]}!`,'good');say(`קנית את נמל ${LOCS[i]} ב־${fmt(c)}.`,'good');speak(`קנית את הנמל ${LOCS[i]}.`,'joy');hud();try{qmark()}catch(e){}draw()}
@@ -1319,7 +1330,7 @@ async function propArrive(d0){const i=S.loc,m=ownMap(),me=myIdx();let tot=0;Obje
  const e=m[i];if(e&&e.o!==me&&G2&&G2.on&&e.m){toast(`🏦 הנמל ${LOCS[i]} משועבד, אז עגנת בלי לשלם שכר.`,'info')}if(e&&e.o!==me&&G2&&G2.on&&!e.m){const ow=G2.p[e.o];let rent=Math.round(e.r>0?pRent(i,e.r)*setMult(e.o,i):60+pDeg(i)*20),due=rent,paid=0;
   const f=Math.min(S.cash,due);S.cash-=f;paid+=f;due-=f;if(due>0){const b=Math.min(S.bank,due);S.bank-=b;paid+=b;due-=b}
   if(due>0){GOODS.forEach((g,gi)=>{if(due<=0)return;const q=S.cargo[g.k];if(!q)return;const val=Math.max(1,Math.floor((S.prices[gi]||1)*.5)),need=Math.min(q,Math.ceil(due/val)),got=Math.min(due,need*val);S.cargo[g.k]-=need;paid+=got;due-=got})}
-  if(due>0){const mm=ownMap();let used=0;Object.keys(mm).filter(k=>mm[k].o===me&&!mm[k].m).forEach(k=>{if(due<=0)return;const e2=mm[k];e2.m=Math.round(propValue(+k,e2)*.5/10)*10;const take=Math.min(due,e2.m);paid+=take;due-=take;S.cash+=e2.m-take;used++});if(used)toast(`🏦 משכנת ${used} נכסים כדי לשלם את השכר.`,'warn')}ow.cash+=paid;ow.rentIn=(ow.rentIn||0)+paid;netTell('pay',{amt:paid,port:i,n:S.name,r:e.r});sfx('cash');say(`🏨 שילמת ${fmt(paid)} שכר דירה ל${ow.name} על העגינה ב${LOCS[i]}.`,'bad');toast(`🏨 שילמת ${fmt(paid)} ל${esc(ow.name)} (${e.r} חדרים ב${LOCS[i]})`,'bad');hud();
+  if(due>0){const mm=ownMap();let used=0;Object.keys(mm).filter(k=>mm[k].o===me&&!mm[k].m).forEach(k=>{if(due<=0)return;const e2=mm[k];e2.m=Math.round(propValue(+k,e2)*.5/10)*10;const take=Math.min(due,e2.m);paid+=take;due-=take;S.cash+=e2.m-take;used++});if(used)toast(`🏦 משכנת ${used} נכסים כדי לשלם את השכר.`,'warn')}ow.cash+=paid;ow.rentIn=(ow.rentIn||0)+paid;netTell('pay',{amt:paid,port:i,n:S.name,r:e.r,to:e.o});sfx('cash');say(`🏨 שילמת ${fmt(paid)} שכר דירה ל${ow.name} על העגינה ב${LOCS[i]}.`,'bad');toast(`🏨 שילמת ${fmt(paid)} ל${esc(ow.name)} (${e.r} חדרים ב${LOCS[i]})`,'bad');hud();
   if(due>0){S.cash=0;S.bank=0;await endGameBy('bankrupt')}}
  if(!S.over){try{await propEvents()}catch(e3){console.error(e3)}}try{qmark();renderHotel(false)}catch(e2){}hud();draw()}
 function propCards(){const m=ownMap(),me=myIdx(),i=S.loc,e=m[i],two=(G2&&G2.on)||aiOn();let h='';
@@ -1331,7 +1342,7 @@ function propCards(){const m=ownMap(),me=myIdx(),i=S.loc,e=m[i],two=(G2&&G2.on)|
  const mine=Object.keys(m).filter(k=>m[k].o===me),his=two?Object.keys(m).filter(k=>m[k].o!==me):[];
  const sets=[0,1,2,3].map(g=>{const n=setCount(me,g);return n?`<span class="mut" style="font-size:11px">${REG[g]}: ${n}/4${n>=3?' ⭐':''}</span>`:''}).filter(Boolean).join(' · ');
  h+=`<div class="card" style="padding:6px 10px"><b>🏨 הנכסים שלי</b> <span class="mut" style="font-size:11px">· שווי ${fmt(assetVal(S))}</span>${mine.length?mine.map(k=>row(k,me)).join(''):'<div class="mut" style="font-size:12px">עוד אין נכסים. קנה נמל ובנה בו מלון.</div>'}${sets?`<div style="margin-top:3px">${sets}</div>`:''}</div>`;
- if(two)h+=`<div class="card" style="padding:6px 10px"><b>🏨 הנכסים של ${esc(ownerName(1-me))}</b>${his.length?his.map(k=>row(k,m[k].o)).join(''):'<div class="mut" style="font-size:12px">עוד אין לו נכסים.</div>'}</div>`;
+ if(two){((G2&&G2.on)?g2rivs():[1-me]).forEach(oi=>{const hs=Object.keys(m).filter(k=>m[k].o===oi);h+=`<div class="card" style="padding:6px 10px"><b>🏨 הנכסים של ${esc(ownerName(oi))}</b>${hs.length?hs.map(k=>row(k,oi)).join(''):'<div class="mut" style="font-size:12px">עוד אין לו נכסים.</div>'}</div>`})}
  return h}
 {const _qc=questCard;questCard=function(){return _qc()+propCards()}}
 {const _qm2=qmark;qmark=function(){_qm2();const e=$('qs');if(!e||!S)return;const m=(G2&&G2.on)?G2.own:S.own1;if(!m)return;e.insertAdjacentHTML('beforeend',Object.keys(m).map(k=>{const q=m[k];if(!q)return'';return `<g transform="translate(${SP[k][2]-16},${SP[k][3]+14})"><circle r="8.5" fill="${ownCol(q.o)}" stroke="#fff" stroke-width="2"/><text y="3.6" font-size="10" text-anchor="middle" fill="#fff" font-weight="800">${q.r}</text></g>`}).join(''))}}
@@ -1373,7 +1384,7 @@ function propAmen(x){if(S.busy)return;const i=S.loc,e=ownMap()[i];if(!e||e.o!==m
 function buyoutCost(i,e){let c=pPrice(i);for(let r=1;r<=e.r;r++)c+=pRoomCost(i,r);if(e.a)Object.keys(e.a).forEach(x=>{if(e.a[x])c+=AMEN[x][1]});return Math.round(c*1.6/10)*10}
 function buyoutRow(i,e){const c=buyoutCost(i,e);return `<div class="row" style="margin-top:5px"><span class="mut" style="font-size:11px">💼 רכישה כפויה: משלמים פי 1.6 והנמל עובר אליך עם כל הבנייה.</span><button class="a" style="padding:3px 8px" ${S.busy||S.cash<c?'disabled':''} onclick="propBuyout()">💼 ${fmt(c)}</button></div>`}
 function propBuyout(){if(S.busy||!(G2&&G2.on))return;const i=S.loc,e=ownMap()[i];if(!e||e.o===G2.cur)return;const c=buyoutCost(i,e);if(S.cash<c){toast(`אין מספיק כסף: ${fmt(c)}.`,'bad');sfx('err');return}
- const ow=G2.p[e.o];netTell('pay',{amt:c,port:i,n:S.name,bo:1});e.pd=0;ow.news=(ow.news||[]).concat(`💼 ${esc(S.name)} רכש ממך בכוח את נמל ${LOCS[i]} ב־${fmt(c)}!`);S.cash-=c;ow.cash+=c;e.o=G2.cur;S.bo=(S.bo||0)+1;sfx('drum');sfx('cash',.4);toast(`💼 רכשת בכוח את ${LOCS[i]} מ${esc(ow.name)}!`,'good');say(`רכשת את ${LOCS[i]} מ${ow.name} ב־${fmt(c)}.`,'good');speak(`רכישה כפויה! הנמל ${LOCS[i]} עבר אליך.`,'joy');try{renderHotel(true);qmark()}catch(er){}hud();draw()}
+ const ow=G2.p[e.o];netTell('pay',{amt:c,port:i,n:S.name,bo:1,to:e.o});e.pd=0;ow.news=(ow.news||[]).concat(`💼 ${esc(S.name)} רכש ממך בכוח את נמל ${LOCS[i]} ב־${fmt(c)}!`);S.cash-=c;ow.cash+=c;e.o=G2.cur;S.bo=(S.bo||0)+1;sfx('drum');sfx('cash',.4);toast(`💼 רכשת בכוח את ${LOCS[i]} מ${esc(ow.name)}!`,'good');say(`רכשת את ${LOCS[i]} מ${ow.name} ב־${fmt(c)}.`,'good');speak(`רכישה כפויה! הנמל ${LOCS[i]} עבר אליך.`,'joy');try{renderHotel(true);qmark()}catch(er){}hud();draw()}
 const CHANCE=[
  ['🎉 פסטיבל בנמל','תושבי העיר חוגגים והקופה מלאה.',()=>{S.cash+=300;return '+300 ₪'}],
  ['🧾 מס נמל','פקיד המכס מצא חוב ישן.',()=>{const t=Math.min(S.cash,150);S.cash-=t;return `−${fmt(t)}`}],
@@ -1381,7 +1392,7 @@ const CHANCE=[
  ['📣 קמפיין תיירות','כרזות ברחבי הים התיכון: ההכנסה ממלונות כפולה בהגעה הבאה.',()=>{S.boom=1;return 'הכנסה כפולה'}],
  ['🛠️ מספנה חינם','הנגרים בנמל תיקנו לך את הספינה.',()=>{if(S.hull==null)S.hull=100;const a=Math.min(100-S.hull,15);S.hull+=a;return a>0?`+${a}% מצב ספינה`:'הספינה כבר במצב מושלם'}],
  ['🌪️ סערת חוף','רוח חזקה פגעה בעוגן.',()=>{if(S.hull==null)S.hull=100;S.hull=Math.max(20,S.hull-8);return '−8% מצב ספינה'}],
- ['🕵️ סוכן חשאי','איש מסתורי לוחש לך על היריב.',()=>{if(G2&&G2.on){const o=G2.p[1-G2.cur];return `ל${o.name} יש ${fmt(o.cash)} ₪ ו־${Object.keys(ownMap()).filter(k=>ownMap()[k].o!==G2.cur).length} נמלים`}S.cash+=150;return '+150 ₪'}],
+ ['🕵️ סוכן חשאי','איש מסתורי לוחש לך על היריב.',()=>{if(G2&&G2.on){const oi=g2rich(),o=G2.p[oi];return `ל${o.name} יש ${fmt(o.cash)} ₪ ו־${Object.keys(ownMap()).filter(k=>ownMap()[k].o===oi).length} נמלים`}S.cash+=150;return '+150 ₪'}],
  ['🏆 מענק למסחר','המועצה מתגמלת סוחרים פעילים.',()=>{const g=150+(S.ct?S.ct.done*100:0);S.cash+=g;return `+${fmt(g)}`}]
 ];
 async function propEvents(){const m=ownMap(),me=myIdx();
@@ -1414,7 +1425,7 @@ function kPts(p,path){const o=kOwn(p);
 function kBar(p,path,label){const v=kPts(p,path),w=Math.min(100,Math.round(v/KTARGET*100));return `<div style="display:flex;align-items:center;gap:6px;font-size:11.5px;margin:2px 0"><span style="width:84px">${KPATH[path][1]}</span><div style="flex:1;height:9px;background:#0001;border-radius:5px;overflow:hidden"><div style="width:${w}%;height:100%;background:${KPATH[path][2]};border-radius:5px;transition:width .6s"></div></div><b style="width:38px;text-align:left" dir="ltr">${v}/${KTARGET}</b></div>`}
 function kingCard(){const two=G2&&G2.on;let h=`<div class="card hcard" style="padding:6px 10px"><b>👑 דרכים לממלכה</b> <span class="mut" style="font-size:11px">· הראשון שמגיע ל־${KTARGET} נקודות בדרך אחת מנצח מיד</span>`;
  h+=[0,1,2].map(i=>kBar(S,i)).join('');
- if(two){const o=G2.p[1-G2.cur];h+=`<div class="mut" style="font-size:11px;margin-top:3px">${esc(o.name)}: ${[0,1,2].map(i=>KPATH[i][1].split(' ')[0]+' '+kPts(o,i)).join(' · ')}</div>`}
+ if(two){g2rivs().forEach(oi=>{const o=G2.p[oi];h+=`<div class="mut" style="font-size:11px;margin-top:3px">${esc(o.name)}: ${[0,1,2].map(i=>KPATH[i][1].split(' ')[0]+' '+kPts(o,i)).join(' · ')}</div>`})}
  return h+'</div>'}
 {const _pc=propCards;propCards=function(){return kingCard()+_pc()}}
 function kCheck(){if(!S||!S.started||S.over||S.dying||S.kwon)return;S.kl=S.kl||[0,0,0];
@@ -1463,69 +1474,115 @@ function prodCards(){const m=ownMap(),me=myIdx(),i=S.loc,e=m[i];let h='';
 
 // ===== שני שחקנים בזמן אמת (חדר בקוד, מבוסס room של claude.ai) =====
 var NET=null;
+var MV_FB='';
 function netMul(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
 const AMK=['c','s','f'];
 function netEnc(){const m=ownMap(),me=G2.cur,out=[];Object.keys(m).forEach(k=>{const e=m[k];if(!e||e.o!==me)return;const a=AMK.reduce((x,q,i)=>x|((e.a&&e.a[q])?1<<i:0),0),st=e.st||{};
  const sig=[+k,e.r||0,a,e.m||0,e.f||0,e.w||0,st.g==null?-1:st.g,st.raw||0,st.proc||0,e.pd||0].join(',');if(e._sg!==sig){e._sg=sig;e.v=Date.now()}
  out.push([+k,e.r||0,a,e.m||0,e.f||0,e.w||0,st.g==null?-1:st.g,st.raw||0,st.proc||0,e.pd||0,e.v||0])});return out}
 function netSum(){const o=S;return{n:o.name,lv:o.lv||0,loc:o.loc,to:G2.to==null?-1:G2.to,day:o.day,rw:wealthOf(o),c:Math.round(o.cash),ov:o.over?1:0,sk:o.sunk?1:0,bk:o.bankrupt?1:0,pw:o.pw||0,rr:o.rr||0,gn:o.gun||0,bo:o.bo||0,cd:o.ct?o.ct.done:0,ri:Math.round(o.rentIn||0),pt:o.prodTotal||0,ns:Object.keys(o.seen||{}).length,sb:o.sabo?1:0}}
-function netPush(){if(!G2||!G2.net||!NET||!NET.room)return;try{const pl={app:'mv2',h:NET.host?1:0,n:S.name,seed:NET.seed,s:netSum(),o:netEnc(),ev:G2.ev.slice(-12),q:G2.seq};
+// ---- Firebase Realtime Database transport (REST + SSE) ----
+function mvFB(){return (typeof MV_FB==='string'&&MV_FB)?MV_FB.replace(/\/+$/,''):''}
+function FBRoom(base,code,me){
+ const R={code,me,T:{},es:null,poll:null,hbi:null,seen:{},sig:{},lastObj:null,hb:0,dead:false,inflight:false,dirty:0,ready:false};
+ const url=p=>`${base}/rooms/${code}${p}.json`;
+ function setAt(path,val){const ks=path.split('/').filter(Boolean);if(!ks.length){R.T=(val&&typeof val==='object')?val:{};return}let o=R.T;for(let i=0;i<ks.length-1;i++){if(typeof o[ks[i]]!=='object'||o[ks[i]]===null)o[ks[i]]={};o=o[ks[i]]}const k=ks[ks.length-1];if(val===null||val===undefined)delete o[k];else o[k]=val}
+ function touchPeers(){const P=(R.T&&R.T.peers)||{};Object.keys(P).forEach(k=>{const g=JSON.stringify(P[k]);if(R.sig[k]!==g){R.sig[k]=g;R.seen[k]=Date.now()}});Object.keys(R.sig).forEach(k=>{if(!P[k]){delete R.sig[k];delete R.seen[k]}})}
+ function onEv(ev){let m;try{m=JSON.parse(ev.data)}catch(e){return}if(!m)return;
+  if(ev.type==='put')setAt(m.path,m.data);
+  else if(ev.type==='patch'){Object.keys(m.data||{}).forEach(k=>setAt((m.path==='/'?'':m.path)+'/'+k,m.data[k]))}
+  R.ready=true;touchPeers()}
+ async function pull(){try{const r=await fetch(url(''),{cache:'no-store'});if(!r.ok)return;const j=await r.json();R.T=(j&&typeof j==='object')?j:{};R.ready=true;touchPeers()}catch(e){}}
+ R.start=async function(){
+  try{if(typeof EventSource==='undefined')throw 0;const es=new EventSource(url(''));R.es=es;es.addEventListener('put',onEv);es.addEventListener('patch',onEv);es.onerror=()=>{if(es.readyState===2&&!R.dead&&!R.poll){R.poll=setInterval(pull,1500)}}}catch(e){R.poll=setInterval(pull,1500)}
+  R.rep=setInterval(pull,8000);
+  R.hbi=setInterval(()=>{if(R.lastObj){R.hb++;R.flush()}},5000);
+  await pull()};
+ R.flush=async function(){if(R.dead)return;if(R.inflight){R.dirty=1;return}R.inflight=true;try{do{R.dirty=0;const body=JSON.stringify(Object.assign({},R.lastObj,{hb:R.hb,t:Date.now()}));await fetch(url('/peers/'+me),{method:'PUT',body})}while(R.dirty&&!R.dead)}catch(e){}R.inflight=false};
+ R.presence=function(o){R.lastObj=o;R.hb++;R.flush()};
+ R.peers=function(){const P=(R.T&&R.T.peers)||{};return Object.keys(P).map(id=>({id,isMe:id===me,presence:P[id],stale:id!==me&&(Date.now()-(R.seen[id]||0)>16000)})).sort((a,b)=>((a.presence&&a.presence.j)||0)-((b.presence&&b.presence.j)||0)||(a.id<b.id?-1:1))};
+ R.meta=function(){return(R.T&&R.T.meta)||null};
+ R.setMeta=async function(o){try{await fetch(url('/meta'),{method:'PUT',body:JSON.stringify(o)})}catch(e){}if(!R.T)R.T={};R.T.meta=o};
+ R.leave=function(host){R.dead=true;try{if(R.es)R.es.close()}catch(e){}clearInterval(R.poll);clearInterval(R.rep);clearInterval(R.hbi);try{fetch(url('/peers/'+me),{method:'DELETE',keepalive:true});if(host)fetch(url('/meta'),{method:'DELETE',keepalive:true})}catch(e){}};
+ return R}
+// ---- game sync ----
+function netPush(){if(!G2||!G2.net||!NET||!NET.room||!NET.started)return;try{const pl={app:'mv2',n:S.name,s:netSum(),o:netEnc(),ev:G2.ev.slice(-12),q:G2.seq,j:NET.j};
  let j=JSON.stringify(pl);if(j.length>3800)pl.ev=pl.ev.slice(-4);const sg=JSON.stringify(pl);if(sg!==NET.last){NET.last=sg;NET.room.presence(pl)}}catch(e){console.error(e)}}
-function netTell(t,d){if(!G2||!G2.net)return;G2.seq=(G2.seq||0)+1;G2.ev.push(Object.assign({i:G2.seq,t},d));if(G2.ev.length>30)G2.ev.shift();netPush()}
-function netApplyEv(e){const R2=G2.p[1-G2.cur],me=G2.cur;
- if(e.t==='pay'){S.cash+=e.amt;if(!e.bo)S.rentIn=(S.rentIn||0)+e.amt;sfx('cash');const tx=e.bo?`💼 ${esc(e.n)} רכש ממך בכוח את ${LOCS[e.port]} ב־${fmt(e.amt)}!`:`🏨 ${esc(e.n)} עגן ב${LOCS[e.port]} ושילם לך ${fmt(e.amt)} שכר`;toast(tx,e.bo?'warn':'good');say(tx.replace(/<[^>]*>/g,''),e.bo?'bad':'good');hud()}
+function netTell(t,d){if(!G2||!G2.net)return;G2.seq=(G2.seq||0)+1;G2.ev.push(Object.assign({i:G2.seq,t,f:G2.cur},d));if(G2.ev.length>30)G2.ev.shift();netPush()}
+function netApplyEv(e,from){const me=G2.cur;
+ if(e.to!=null&&e.to!==me)return;
+ if(e.t==='pay'){S.cash+=e.amt;if(!e.bo)S.rentIn=(S.rentIn||0)+e.amt;if(e.bo){const q=ownMap()[e.port];if(q&&q.o===me){q.o=from;q._sg='in'}}sfx('cash');const tx=e.bo?`💼 ${esc(e.n)} רכש ממך בכוח את ${LOCS[e.port]} ב־${fmt(e.amt)}!`:`🏨 ${esc(e.n)} עגן ב${LOCS[e.port]} ושילם לך ${fmt(e.amt)} שכר`;toast(tx,e.bo?'warn':'good');say(tx.replace(/<[^>]*>/g,''),e.bo?'bad':'good');try{if(e.bo){renderHotel(false);qmark()}}catch(er){}hud()}
  else if(e.t==='news'){sfx('horn');toast(esc(e.x),'warn');say(e.x,'bad');banner(e.x)}
  else if(e.t==='sabo'){S.sabo=1;sfx('drum');toast(`🏴‍☠️ ${esc(e.n)} שכר נגדך שודדים. ההפלגה הבאה מסוכנת!`,'bad');say(`${e.n} שכר נגדך שודדים!`,'bad')}
- else if(e.t==='burn'){G2.burn=G2.burn||{};const b=G2.burn[e.p]=G2.burn[e.p]||[0,0];b[me]+=e.n}
+ else if(e.t==='burn'){G2.burn=G2.burn||{};const b=G2.burn[e.p]=G2.burn[e.p]||[0,0,0,0];b[me]=(b[me]||0)+e.n}
  else if(e.t==='imp'){G2.imp=G2.imp||{};G2.imp[e.p]=e.a}
- else if(e.t==='taken'){G2.taken=G2.taken||{};if(G2.taken[e.id]==null)G2.taken[e.id]=1-me}
- else if(e.t==='tw'){if(G2.tw==null)G2.tw=1-me}
- else if(e.t==='fin'){if(e.k==='kdm'){G2.kdm={w:1-me,path:e.path};G2.p[1-me].over=true;g2Final()}}
+ else if(e.t==='taken'){G2.taken=G2.taken||{};if(G2.taken[e.id]==null)G2.taken[e.id]=from}
+ else if(e.t==='tw'){if(G2.tw==null)G2.tw=from}
+ else if(e.t==='fin'){if(e.k==='kdm'){G2.kdm={w:from,path:e.path};G2.p[from].over=true;g2Final()}else if(e.k==='bankrupt'){G2.p[from].bankrupt=true;G2.p[from].over=true}}
 }
 function banner(x){try{const b=document.createElement('div');b.style.cssText='position:fixed;top:64px;left:50%;transform:translateX(-50%);z-index:9999;background:#fff3c4;color:#1b2a3a;border:3px solid #e0a82e;border-radius:14px;padding:10px 16px;font-weight:800;font-size:15px;box-shadow:0 6px 24px #0007;max-width:88vw;text-align:center;direction:rtl';b.textContent=x;b.onclick=()=>b.remove();document.body.appendChild(b);setTimeout(()=>b.remove(),7000)}catch(e){}}
-function netMerge(list,host){const m=ownMap(),me=G2.cur;list.forEach(a=>{const k=a[0],inc={o:1-me,r:a[1],a:{},m:a[3]||0,f:a[4]||0,w:a[5]||0,pd:a[9]||0,v:a[10]||0,_sg:'in'};AMK.forEach((q,i)=>{if(a[2]&(1<<i))inc.a[q]=1});if(!inc.m)delete inc.m;if(!inc.f)delete inc.f;if(!inc.w)delete inc.w;if(a[6]>=0)inc.st={g:a[6],raw:a[7],proc:a[8]};if(!Object.keys(inc.a).length)delete inc.a;
-  const cur=m[k];if(!cur||cur.o!==me){m[k]=inc;return}
-  const mv=cur.v||(cur.v=Date.now());if(inc.v<mv||(inc.v===mv&&host)){if(cur.pd&&!cur.r){S.cash+=cur.pd;toast(`⚠️ ${LOCS[k]} נקנה בו־זמנית ע״י היריב, והכסף הוחזר לך (${fmt(cur.pd)}).`,'warn')}else toast(`⚠️ ${LOCS[k]} עבר ליריב.`,'warn');m[k]=inc;try{renderHotel(false);qmark();hud();draw()}catch(e){}}})}
-function netTick(){if(!G2||!G2.net||!NET||!NET.room)return;const me=G2.cur,R2=G2.p[1-me];
- const pr=NET.room.peers().find(p=>!p.isMe&&p.presence&&p.presence.app==='mv2'&&(p.presence.h===1)!==NET.host);
- if(!pr){NET.miss=(NET.miss||0)+1;if(NET.miss>8&&!R2.over&&!R2.left&&G2.on){R2.left=true;R2.over=true;toast(`🚪 ${esc(R2.name)} עזב את המשחק.`,'warn');if(S.over)g2Final()}netPush();return}
- NET.miss=0;if(R2.left){R2.left=false;R2.over=false}
- const p=pr.presence,u=p.s||{},ch=(R2.loc!==u.loc||R2.to!==u.to||R2.day!==u.day||R2.rw!==u.rw);
- R2.name=u.n||R2.name;R2.lv=u.lv;R2.loc=u.loc;R2.to=u.to;R2.day=u.day;R2.rw=u.rw;R2.cash=u.c;R2.over=!!u.ov;R2.sunk=!!u.sk;R2.bankrupt=!!u.bk;R2.pw=u.pw;R2.rr=u.rr;R2.gun=u.gn;R2.bo=u.bo;R2.ct={done:u.cd};R2.rentIn=u.ri;R2.prodTotal=u.pt;R2.seen=Object.fromEntries(Array.from({length:u.ns||0},(_,i)=>[i,1]));R2.sabo=!!u.sb;
- try{netMerge(p.o||[],NET.host?false:true)}catch(e){console.error(e)}
- (p.ev||[]).filter(e=>e.i>(NET.last_i||0)).forEach(e=>{NET.last_i=Math.max(NET.last_i||0,e.i);try{netApplyEv(e)}catch(er){console.error(er)}});
+function netMerge(list,oi){const m=ownMap(),me=G2.cur,have={};list.forEach(a=>{const k=a[0];have[k]=1;const inc={o:oi,r:a[1],a:{},m:a[3]||0,f:a[4]||0,w:a[5]||0,pd:a[9]||0,v:a[10]||0,_sg:'in'};AMK.forEach((q,i)=>{if(a[2]&(1<<i))inc.a[q]=1});if(!inc.m)delete inc.m;if(!inc.f)delete inc.f;if(!inc.w)delete inc.w;if(a[6]>=0)inc.st={g:a[6],raw:a[7],proc:a[8]};if(!Object.keys(inc.a).length)delete inc.a;
+  const cur=m[k];if(!cur||cur.o===oi){m[k]=inc;return}
+  const mv=cur.v||(cur.v=Date.now()),win=(inc.v<mv)||(inc.v===mv&&oi<cur.o);
+  if(!win)return;
+  if(cur.o===me){if(cur.pd&&!cur.r){S.cash+=cur.pd;toast(`⚠️ ${LOCS[k]} נקנה בו־זמנית ע״י ${esc(G2.p[oi].name)}, והכסף הוחזר לך (${fmt(cur.pd)}).`,'warn')}else toast(`⚠️ ${LOCS[k]} עבר ל${esc(G2.p[oi].name)}.`,'warn');m[k]=inc;try{renderHotel(false);qmark();hud();draw()}catch(e){}}else m[k]=inc});
+ Object.keys(m).forEach(k=>{if(m[k]&&m[k].o===oi&&!have[k])delete m[k]})}
+function netTick(){if(!G2||!G2.net||!NET||!NET.room||!NET.started)return;const me=G2.cur,peers=NET.room.peers();let ch=false;
+ G2.p.forEach((R2,i)=>{if(i===me||!R2)return;const pr=peers.find(p=>p.id===G2.pid[i]);
+  if(!pr||!pr.presence||pr.stale){R2.miss=(R2.miss||0)+1;if(R2.miss>(pr?1:4)&&!R2.over&&!R2.left&&G2.on){R2.left=true;R2.over=true;toast(`🚪 ${esc(R2.name)} עזב את המשחק.`,'warn');ch=true}return}
+  R2.miss=0;if(R2.left){R2.left=false;R2.over=false;ch=true}
+  const p=pr.presence,u=p.s||{};if(R2.loc!==u.loc||R2.to!==u.to||R2.day!==u.day||R2.rw!==u.rw)ch=true;
+  R2.name=u.n||R2.name;R2.lv=u.lv;R2.loc=u.loc;R2.to=u.to;R2.day=u.day;R2.rw=u.rw;R2.cash=u.c;R2.over=!!u.ov||!!R2.left;R2.sunk=!!u.sk;R2.bankrupt=!!u.bk;R2.pw=u.pw;R2.rr=u.rr;R2.gun=u.gn;R2.bo=u.bo;R2.ct={done:u.cd};R2.rentIn=u.ri;R2.prodTotal=u.pt;R2.seen=Object.fromEntries(Array.from({length:u.ns||0},(_,k)=>[k,1]));R2.sabo=!!u.sb;
+  try{netMerge(p.o||[],i)}catch(e){console.error(e)}
+  NET.seen=NET.seen||{};(p.ev||[]).filter(e=>e.i>(NET.seen[i]||0)).forEach(e=>{NET.seen[i]=Math.max(NET.seen[i]||0,e.i);try{netApplyEv(e,i)}catch(er){console.error(er)}})});
  if(ch){try{mapUpdate();hud()}catch(e){}}
- if(G2.on&&R2.bankrupt&&!S.over){g2Final();return}
- if(G2.on&&S.over&&R2.over)g2Final();
- if(G2.on&&S.over&&!R2.over&&NET.tk%4===0){try{draw()}catch(e){}}
+ if(G2.on){const others=G2.p.filter((p,i)=>i!==me);if(S.over&&others.every(p=>p.over))g2Final();else if(G2.p.length===2&&others[0].bankrupt&&!S.over)g2Final();else if(S.over&&NET.tk%4===0){try{draw()}catch(e){}}}
  NET.tk=(NET.tk||0)+1;netPush()}
-async function netOpen(code,host){const name=(($('nname')||{}).value||'קפטן').trim().slice(0,14)||'קפטן';ST.set('p1',name);let room=null;
- try{const rc=await (window.claude&&window.claude.use?window.claude.use('room'):null);if(!rc)throw new Error('no');room=await rc.join('mv2-'+code)}catch(e){toast('אי אפשר להתחבר: משחק בזמן אמת עובד רק כשעמוד המשחק פתוח ב־claude.ai ושניכם מחוברים.','bad');return netLobby()}
- NET={room,host,code,name,seed:host?(1+Math.floor(Math.random()*2147483000)):0,miss:0,tk:0};room.presence({app:'mv2',h:host?1:0,n:name,seed:NET.seed,s:{n:name},o:[],ev:[],q:0});
- ov(`<div class="mcard" style="text-align:center"><h2>🌐 ממתינים ליריב</h2><p>קוד החדר: <b style="font-size:30px;letter-spacing:6px;direction:ltr;display:inline-block">${esc(code.toUpperCase())}</b></p><p class="mut">${host?'שלח את הקוד לחבר, והוא ילחץ "הצטרף" באותו עמוד משחק.':'מתחברים לחדר...'}</p><button class="mb2" onclick="netCancel()">✕ ביטול</button></div>`,'dim');
- NET.wait=setInterval(()=>{if(!NET||G2)return;const pr=room.peers().find(p=>!p.isMe&&p.presence&&p.presence.app==='mv2'&&(p.presence.h===1)!==host&&(host||p.presence.seed));if(pr){clearInterval(NET.wait);NET.seed=host?NET.seed:pr.presence.seed;netBegin(pr.presence.n||'יריב')}},400)}
-function netCancel(){try{if(NET&&NET.wait)clearInterval(NET.wait);if(NET&&NET.room)NET.room.leave()}catch(e){}NET=null;closeOv();mainMenu(false)}
-function netLobby(){const nm=ST.get('p1','')||ST.get('name','')||'';ov(`<div class="mcard" style="text-align:center"><h2>🌐 שני שחקנים · זמן אמת <button class="sm" onclick="backMenu()">✕</button></h2><p class="mut" style="font-size:14px">כל קפטן במכשיר שלו, ושניכם מפליגים באותו זמן. אותו עולם ואותם נמלים. מי שמסיים 30 ימים בעשירות הגדולה יותר מנצח, או מי שמגיע ראשון לממלכה.</p><input id="nname" maxlength="14" placeholder="השם שלך" value="${esc(nm)}" style="width:100%;box-sizing:border-box;margin:6px 0;padding:11px;border-radius:12px;border:2px solid #cfd8e0;font:inherit;font-weight:700;text-align:center"><button class="mb2 play" style="width:100%;margin-top:6px" onclick="netCreate()">➕ צור חדר חדש</button><div style="margin:10px 0 4px" class="mut">או הצטרף לחדר של חבר:</div><div style="display:flex;gap:6px"><input id="ncode" maxlength="4" placeholder="קוד" dir="ltr" style="flex:1;box-sizing:border-box;padding:11px;border-radius:12px;border:2px solid #cfd8e0;font:inherit;font-weight:800;text-align:center;text-transform:uppercase;letter-spacing:4px"><button class="mb2" onclick="netJoinUI()">🚪 הצטרף</button></div><p class="mut" style="font-size:12px;margin-top:10px">החבר צריך לפתוח את אותו קישור משחק ב־claude.ai (דורש שיתוף של העמוד איתו).</p></div>`,'dim')}
+// ---- lobby ----
+function netName(){return(($('nname')||{}).value||ST.get('p1','')||'קפטן').trim().slice(0,14)||'קפטן'}
+function netLobby(){const nm=ST.get('p1','')||ST.get('name','')||'';if(!mvFB()){ov(`<div class="mcard" style="text-align:center"><h2>🌐 משחק מקוון <button class="sm" onclick="backMenu()">✕</button></h2><p class="mut">המשחק המקוון עדיין לא מוגדר בגרסה הזו.</p></div>`,'dim');return}
+ ov(`<div class="mcard" style="text-align:center"><h2>🌐 עד 4 שחקנים · זמן אמת <button class="sm" onclick="backMenu()">✕</button></h2><p class="mut" style="font-size:14px">כל קפטן במכשיר שלו, וכולם מפליגים באותו זמן באותו עולם. מי שמסיים 30 ימים בעשירות הגדולה ביותר מנצח, או מי שמגיע ראשון לממלכה.</p><input id="nname" maxlength="14" placeholder="השם שלך" value="${esc(nm)}" style="width:100%;box-sizing:border-box;margin:6px 0;padding:11px;border-radius:12px;border:2px solid #cfd8e0;font:inherit;font-weight:700;text-align:center"><button class="mb2 play" style="width:100%;margin-top:6px" onclick="netCreate()">➕ צור חדר חדש</button><div style="margin:10px 0 4px" class="mut">או הצטרף לחדר של חבר:</div><div style="display:flex;gap:6px"><input id="ncode" maxlength="4" placeholder="קוד" dir="ltr" style="flex:1;box-sizing:border-box;padding:11px;border-radius:12px;border:2px solid #cfd8e0;font:inherit;font-weight:800;text-align:center;text-transform:uppercase;letter-spacing:4px"><button class="mb2" onclick="netJoinUI()">🚪 הצטרף</button></div><p class="mut" style="font-size:12px;margin-top:10px">צריך חיבור לאינטרנט. כל שחקן מקבל את הקוד מהמארח.</p></div>`,'dim')}
+function netErr(msg){toast(msg,'bad');try{if(NET&&NET.room)NET.room.leave(NET.host)}catch(e){}NET=null;netLobby()}
+async function netOpen(code,host){const name=netName();ST.set('p1',name);const me=Math.random().toString(36).slice(2,10);
+ const room=FBRoom(mvFB(),code,me);NET={room,host,code,name,me,j:Date.now(),started:false,tk:0};
+ ov(`<div class="mcard" style="text-align:center"><h2>🌐 מתחברים...</h2></div>`,'dim');
+ try{await room.start()}catch(e){return netErr('אי אפשר להתחבר לשרת. בדוק חיבור לאינטרנט.')}
+ const meta=room.meta();
+ if(host&&meta)return netErr('הקוד תפוס, נסה שוב.');
+ if(!host){if(!meta)return netErr('החדר לא נמצא. בדוק את הקוד.');if(meta.start)return netErr('המשחק בחדר הזה כבר התחיל.');if(room.peers().filter(p=>!p.stale).length>=4)return netErr('החדר מלא (4 שחקנים).')}
+ if(host)await room.setMeta({host:me,t:Date.now()});
+ room.presence({app:'mv2',n:name,lobby:1,j:NET.j});
+ NET.wait=setInterval(netLobbyTick,500);netLobbyTick()}
+function netLobbyTick(){if(!NET||NET.started)return;const room=NET.room,meta=room.meta(),peers=room.peers().filter(p=>!p.stale&&p.presence&&p.presence.app==='mv2');
+ if(!NET.host&&!meta&&NET.tk++>6){return netErr('המארח עזב את החדר.')}
+ if(meta&&meta.start){const o=meta.start.order||[],i=o.indexOf(NET.me);if(i<0)return netErr('המשחק כבר התחיל בלעדיך.');clearInterval(NET.wait);return netBegin(meta.start,i)}
+ const list=peers.map(p=>`<div style="padding:6px;border-radius:10px;background:#eef4f8;margin:4px 0;font-weight:700">${p.isMe?'⭐ ':'👤 '}${esc(p.presence.n||'קפטן')}${meta&&p.id===meta.host?' (מארח)':''}</div>`).join('');
+ const can=NET.host&&peers.length>=2;
+ ov(`<div class="mcard" style="text-align:center"><h2>🌐 חדר מקוון</h2><p>קוד החדר: <b style="font-size:34px;letter-spacing:6px;direction:ltr;display:inline-block">${esc(NET.code.toUpperCase())}</b></p><p class="mut" style="font-size:13px">שלח את הקוד לחברים (עד 4 שחקנים).</p>${list}<p class="mut" style="font-size:13px">${NET.host?(can?'כשכולם כאן, לחץ התחל.':'ממתינים לעוד שחקן...'):'ממתינים שהמארח יתחיל...'}</p>${NET.host?`<button class="mb2 play" style="width:100%" ${can?'':'disabled'} onclick="netStartGame()">▶ התחל (${peers.length} שחקנים)</button>`:''}<button class="mb2" style="margin-top:6px" onclick="netCancel()">✕ ביטול</button></div>`,'dim')}
+function netStartGame(){if(!NET||!NET.host)return;const peers=NET.room.peers().filter(p=>!p.stale&&p.presence&&p.presence.app==='mv2').slice(0,4);if(peers.length<2)return;
+ const start={seed:1+Math.floor(Math.random()*2147483000),order:peers.map(p=>p.id),names:peers.map(p=>p.presence.n||'קפטן')};
+ NET.room.setMeta({host:NET.me,t:Date.now(),start});clearInterval(NET.wait);netBegin(start,start.order.indexOf(NET.me))}
+function netCancel(){try{if(NET&&NET.wait)clearInterval(NET.wait);if(NET&&NET.room)NET.room.leave(NET.host)}catch(e){}NET=null;closeOv();mainMenu(false)}
 function netCreate(){const al='abcdefghjkmnpqrstuvwxyz23456789';let c='';for(let i=0;i<4;i++)c+=al[Math.floor(Math.random()*al.length)];netOpen(c,true)}
 function netJoinUI(){const c=((($('ncode')||{}).value)||'').trim().toLowerCase().replace(/[^a-z0-9]/g,'');if(c.length<4){toast('הקלד קוד בן 4 תווים.','warn');return}netOpen(c,false)}
-function netBegin(rivalName){const me=NET.host?0:1;closeOv();unlock();const orig=Math.random;Math.random=netMul(NET.seed);G2=null;try{init()}finally{Math.random=orig}
- S.started=true;S.name=NET.name;ensureX();S.rival.loc=-1;const R2={net:1,name:rivalName,lv:0,loc:S.loc,to:-1,day:1,over:false,cash:2000,bank:0,rw:2000,cargo:{},prices:[],rentIn:0,ct:{done:0},seen:{}};
- const p=[null,null];p[1-me]=R2;Object.defineProperty(p,me,{get:()=>S,set:()=>{},enumerable:true,configurable:true});
- G2={on:true,net:true,cur:me,p,imp:{},own:{},taken:{},burn:{},tw:null,ev:[],seq:0,to:-1};CAP=SHIPS[S.lv][1];try{face(1)}catch(e){}PREV=null;closeSheet();scene();setMode('port'+S.loc);amb('port');mapUpdate();qmark();hud();tab('mk');draw();
- NET.last=null;NET.last_i=0;NET.iv=setInterval(netTick,400);say(`המשחק מתחיל: ${S.name} נגד ${rivalName}. בהצלחה!`);toast(`🌐 ${esc(S.name)} נגד ${esc(rivalName)}. מפליגים באותו זמן!`,'good');speak(`${S.name} נגד ${rivalName}. בהצלחה.`,'joy');sfx('fanfare');netPush()}
-function netStop(){try{if(NET){clearInterval(NET.iv);clearInterval(NET.wait);if(NET.room)NET.room.leave()}}catch(e){}NET=null;if(G2&&G2.net)G2=null}
+function netBegin(start,me){NET.started=true;NET.seed=start.seed;closeOv();unlock();const orig=Math.random;Math.random=netMul(start.seed);G2=null;try{init()}finally{Math.random=orig}
+ S.started=true;S.name=NET.name;ensureX();S.rival.loc=-1;const p=[];start.order.forEach((id,i)=>{if(i===me)p.push(null);else p.push({net:1,name:start.names[i]||'קפטן',lv:0,loc:S.loc,to:-1,day:1,over:false,cash:2000,bank:0,rw:2000,cargo:{},prices:[],rentIn:0,ct:{done:0},seen:{}})});
+ Object.defineProperty(p,me,{get:()=>S,set:()=>{},enumerable:true,configurable:true});
+ G2={on:true,net:true,cur:me,p,pid:start.order.slice(),imp:{},own:{},taken:{},burn:{},tw:null,ev:[],seq:0,to:-1};CAP=SHIPS[S.lv][1];try{face(1)}catch(e){}PREV=null;closeSheet();scene();setMode('port'+S.loc);amb('port');mapUpdate();qmark();hud();tab('mk');draw();
+ NET.last=null;NET.seen={};NET.tk=0;NET.iv=setInterval(netTick,400);const names=start.names.join(' · ');say(`המשחק מתחיל: ${names}. בהצלחה!`);toast(`🌐 ${esc(names)}. מפליגים באותו זמן!`,'good');speak(`המשחק מתחיל. בהצלחה לכולם.`,'joy');sfx('fanfare');netPush()}
+function netStop(){try{if(NET){clearInterval(NET.iv);clearInterval(NET.wait);if(NET.room)NET.room.leave(NET.host)}}catch(e){}NET=null;if(G2&&G2.net)G2=null}
 {const _ss=ST.set;ST.set=function(k,v){if(k==='auto'&&G2&&G2.net)return;return _ss.apply(ST,arguments)}}
 {const _e=g2EndTurn;g2EndTurn=async function(){if(!(G2&&G2.net))return _e();if(G2.ending)return;G2.ending=1;try{while(S.dying)await sleep(250);
-  Object.keys(G2.imp||{}).forEach(k=>G2.imp[k]=G2.imp[k].map(v=>1+(v-1)*.8));if(G2.burn)Object.keys(G2.burn).forEach(k=>{G2.burn[k][G2.cur]*=.85});
-  if(S.bankrupt){netTell('fin',{k:'bankrupt'});netPush();return g2Final()}
-  netPush();if(S.over&&G2.p[1-G2.cur].over)return g2Final();if(S.over)draw()}finally{G2.ending=0}}}
+  Object.keys(G2.imp||{}).forEach(k=>G2.imp[k]=G2.imp[k].map(v=>1+(v-1)*.8));if(G2.burn)Object.keys(G2.burn).forEach(k=>{G2.burn[k][G2.cur]=(G2.burn[k][G2.cur]||0)*.85});
+  if(S.bankrupt){S.over=1;netTell('fin',{k:'bankrupt'});netPush()}
+  netPush();if(S.over&&G2.p.filter((p,i)=>i!==G2.cur).every(p=>p.over))return g2Final();if(S.over)draw()}finally{G2.ending=0}}}
 {const _s3=sail;sail=async function(d,pre){if(G2&&G2.net)G2.to=d;try{return await _s3(d,pre)}finally{if(G2&&G2.net){G2.to=-1;netPush()}}}}
 {const _t5=trade;trade=function(i,m){_t5(i,m);if(G2&&G2.net&&G2.imp&&G2.imp[S.loc])netTell('imp',{p:S.loc,a:G2.imp[S.loc].map(v=>+(+v).toFixed(3))})}}
 {const _a5=addRep;addRep=function(p,n,q){_a5(p,n,q);if(G2&&G2.net&&n<0)netTell('burn',{p,n:Math.abs(n)})}}
-{const _rh5=rivalHtml;rivalHtml=function(){if(G2&&G2.net){const i=1-G2.cur,o=G2.p[i];if(!o||o.over||o.loc==null||!SP[o.loc])return'';const a=SP[o.loc],b=(o.to>=0&&SP[o.to])?SP[o.to]:a,x=(a[2]+b[2])/2+20,y=(a[3]+b[3])/2-6;return `<g transform="translate(${x},${y}) scale(.3)"><g class="mb">${ship(o.lv||0,Object.assign({},G2COL[i]))}</g></g><text x="${x}" y="${y-20}" font-size="9" text-anchor="middle" font-weight="800" fill="#fff" stroke="#1b3a6b" stroke-width="2.6" paint-order="stroke">${esc(o.name)}</text>`}return _rh5()}}
-{const _mm5=mainMenu;mainMenu=function(g){if(!g&&G2&&G2.net&&!NET_KEEP)netStop();_mm5(g);if(!g&&OV&&!OV.querySelector('#bnet')){const p=OV.querySelector('#b2p')||OV.querySelector('.play');if(p)p.insertAdjacentHTML('afterend','<button id="bnet" class="mb2 sec" onclick="netLobby()">🌐 שני שחקנים · זמן אמת (כל אחד במכשיר שלו)</button>')}}}
+{const _rh5=rivalHtml;rivalHtml=function(){if(G2&&G2.net){return g2rivs().map((i,k)=>{const o=G2.p[i];if(!o||o.over||o.left||o.loc==null||!SP[o.loc])return'';const a=SP[o.loc],b=(o.to>=0&&SP[o.to])?SP[o.to]:a,x=(a[2]+b[2])/2+20+k*14,y=(a[3]+b[3])/2-6;return `<g transform="translate(${x},${y}) scale(.3)"><g class="mb">${ship(o.lv||0,Object.assign({},G2COL[i]))}</g></g><text x="${x}" y="${y-20}" font-size="9" text-anchor="middle" font-weight="800" fill="#fff" stroke="#1b3a6b" stroke-width="2.6" paint-order="stroke">${esc(o.name)}</text>`}).join('')}return _rh5()}}
+{const _mm5=mainMenu;mainMenu=function(g){if(!g&&G2&&G2.net&&!NET_KEEP)netStop();_mm5(g);if(!g&&mvFB()&&OV&&!OV.querySelector('#bnet')){const p=OV.querySelector('#b2p')||OV.querySelector('.play');if(p)p.insertAdjacentHTML('afterend','<button id="bnet" class="mb2 sec" onclick="netLobby()">🌐 עד 4 שחקנים · אונליין בזמן אמת</button>')}}}
 var NET_KEEP=false;
-try{if(typeof OV!=='undefined'&&OV&&!OV.querySelector('#bnet')){const p=OV.querySelector('#b2p')||OV.querySelector('.play');if(p)p.insertAdjacentHTML('afterend','<button id="bnet" class="mb2 sec" onclick="netLobby()">🌐 שני שחקנים · זמן אמת (כל אחד במכשיר שלו)</button>')}}catch(e){}
+try{if(mvFB()&&typeof OV!=='undefined'&&OV&&!OV.querySelector('#bnet')){const p=OV.querySelector('#b2p')||OV.querySelector('.play');if(p)p.insertAdjacentHTML('afterend','<button id="bnet" class="mb2 sec" onclick="netLobby()">🌐 עד 4 שחקנים · אונליין בזמן אמת</button>')}}catch(e){}
 {const _eg=typeof exitGame==='function'?exitGame:null;if(_eg){exitGame=function(){if(G2&&G2.net)netStop();return _eg.apply(this,arguments)}}}
 {const _sn5=startNew;startNew=function(){if(G2&&G2.net)netStop();_sn5()}}
 
