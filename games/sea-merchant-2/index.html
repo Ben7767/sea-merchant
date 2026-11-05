@@ -595,7 +595,7 @@ function A(){if(AU.ctx)return AU.ctx;
  try{const C=window.AudioContext||window.webkitAudioContext;if(!C)return null;const c=new C();AU.ctx=c;
   const comp=c.createDynamicsCompressor();comp.threshold.value=-18;comp.knee.value=20;comp.ratio.value=6;comp.attack.value=.004;comp.release.value=.25;
   const mg=c.createGain();mg.gain.value=.85;comp.connect(mg);mg.connect(c.destination);
-  const an=c.createAnalyser();an.fftSize=1024;mg.connect(an);AU.an=an;
+  
   const mk=(n,v)=>{const g=c.createGain();g.gain.value=v;g.connect(comp);AU.bus[n]=g};
   mk('music',AU.music?AU.mv:0);mk('sfx',AU.sound?AU.sv:0);mk('amb',AU.sound?AU.sv*.6:0);
   // simple reverb: filtered feedback delay
@@ -615,20 +615,20 @@ function osc(f,t,d,o={}){const c=AU.ctx;if(!c)return;const a=o.a??.005,os=c.crea
  os.type=o.type||'sine';os.frequency.setValueAtTime(f,t);if(o.to)os.frequency.exponentialRampToValueAtTime(o.to,t+a+d);if(o.det)os.detune.value=o.det;
  let n=os;if(o.lp){const fl=c.createBiquadFilter();fl.type='lowpass';fl.frequency.setValueAtTime(o.lp,t);if(o.lpTo)fl.frequency.exponentialRampToValueAtTime(o.lpTo,t+a+d);os.connect(fl);n=fl}
  n.connect(g);env(g,t,a,d,o.v??.2);g.connect(AU.bus[o.bus||AU.cur||'sfx']||AU.bus.sfx);
- if(o.rev){const r=c.createGain();r.gain.value=o.rev;g.connect(r);r.connect(AU.rev)}
- if(o.vib){const l=c.createOscillator(),lg=c.createGain();l.frequency.value=o.vib[0];lg.gain.value=o.vib[1];l.connect(lg);lg.connect(os.frequency);l.start(t);l.stop(t+a+d+.1)}
+ if(o.rev&&!AU.lite){const r=c.createGain();r.gain.value=o.rev;g.connect(r);r.connect(AU.rev)}
+ if(o.vib&&!AU.lite){const l=c.createOscillator(),lg=c.createGain();l.frequency.value=o.vib[0];lg.gain.value=o.vib[1];l.connect(lg);lg.connect(os.frequency);l.start(t);l.stop(t+a+d+.1)}
  os.start(t);os.stop(t+a+d+.1)}
 function nz(t,d,o={}){const c=AU.ctx;if(!c)return;const a=o.a??.005,s=c.createBufferSource(),f=c.createBiquadFilter(),g=c.createGain();
  s.buffer=AU.nb;s.loop=true;f.type=o.type||'bandpass';f.frequency.setValueAtTime(o.f||1000,t);if(o.to)f.frequency.exponentialRampToValueAtTime(o.to,t+a+d);f.Q.value=o.q||1;
  s.connect(f);f.connect(g);env(g,t,a,d,o.v??.2);g.connect(AU.bus[o.bus||AU.cur||'sfx']||AU.bus.sfx);
- if(o.rev){const r=c.createGain();r.gain.value=o.rev;g.connect(r);r.connect(AU.rev)}
+ if(o.rev&&!AU.lite){const r=c.createGain();r.gain.value=o.rev;g.connect(r);r.connect(AU.rev)}
  s.start(t,Math.random()*1.5);s.stop(t+a+d+.1)}
 // --- ambience beds (sea, rain, wind) ---
 function startAmb(){const c=AU.ctx;if(!c||AU.amb)return;
  const src=(f1,type,q)=>{const s=c.createBufferSource();s.buffer=AU.nb;s.loop=true;const f=c.createBiquadFilter();f.type=type;f.frequency.value=f1;f.Q.value=q||.7;const g=c.createGain();g.gain.value=0;s.connect(f);f.connect(g);g.connect(AU.bus.amb);s.start();return{f,g}};
- const sea=src(420,'lowpass'),rain=src(3200,'highpass'),wind=src(520,'bandpass',1.2);
+ const sea=src(420,'lowpass'),rain=AU.lite?{f:{frequency:{}},g:{gain:{setTargetAtTime(){},value:0}}}:src(3200,'highpass'),wind=AU.lite?{f:{frequency:{}},g:{gain:{setTargetAtTime(){},value:0}}}:src(520,'bandpass',1.2);
  const lfo=(p,rate,depth)=>{const o=c.createOscillator(),g=c.createGain();o.frequency.value=rate;g.gain.value=depth;o.connect(g);g.connect(p);o.start()};
- lfo(sea.f.frequency,.11,200);lfo(wind.f.frequency,.17,260);lfo(sea.g.gain,.09,.06);
+ if(!AU.lite){lfo(sea.f.frequency,.11,200);lfo(wind.f.frequency,.17,260);lfo(sea.g.gain,.09,.06)}
  AU.amb={sea,rain,wind}}
 const AMB={port:[.22,0,.01],sail:[.32,0,.06],storm:[.55,.13,.38],cut:[.26,0,.05]};
 function amb(m){const c=AU.ctx;if(!c||!AU.amb)return;AU.ambm=m;const v=AMB[m]||AMB.port,t=c.currentTime;[AU.amb.sea,AU.amb.rain,AU.amb.wind].forEach((x,i)=>x.g.gain.setTargetAtTime(v[i],t,1.1))}
@@ -746,7 +746,7 @@ const ARR=[['אלכסנדריה','עיר המגדלור והספרייה הגד�
 function arriveLine(d){const n=LOCS[d],f=ARR[d][1],k=Math.floor(Math.random()*3);return k==0?`הגענו ל${n}! ${f}`:k==1?`ברוכים הבאים ל${n}. ${f}`:`עוגנים ב${n}. ${f}`}
 // --- controls ---
 function unlock(){const c=A();if(!c)return;if(c.state!=='running')c.resume();
- if(!AU.started){AU.started=true;startAmb();clearInterval(AU.mt);AU.mt=setInterval(mtick,60);setMode('port'+S.loc);amb('port')}}
+ if(!AU.started){AU.started=true;startAmb();clearInterval(AU.mt);AU.mt=setInterval(mtick,AU.lite?110:60);setMode('port'+S.loc);amb('port')}}
 ['pointerdown','touchstart','keydown'].forEach(e=>addEventListener(e,unlock,{passive:true}));
 addEventListener('pointerdown',ev=>{if(ev.target.closest&&ev.target.closest('button,.pt'))sfx('click')},{passive:true});
 document.addEventListener('visibilitychange',()=>{const c=AU.ctx;if(!c||!AU.started)return;document.hidden?c.suspend():c.resume()});
@@ -822,7 +822,7 @@ function startTraffic(){const g=$('traf');if(!g)return;const all=ED.map((_,i)=>i
  g.innerHTML=TRAFFIC.map((t,k)=>`<g id="tf${k}" class="tf" onclick="tfTap(${k})">${t.kind=='p'?'<circle r="13" class="tfr"/>':''}<text font-size="${t.kind=='p'?17:15}" text-anchor="middle" y="5">${t.kind=='p'?'🏴‍☠️':'🚢'}</text></g>`).join('');
  TRAFFIC.forEach((t,k)=>t.el=$('tf'+k));let last=performance.now();
  (function loop(now){const dt=Math.min(.1,(now-last)/1000);last=now;
-  TRAFFIC.forEach(t=>{const p=$('ed'+t.e);if(!p)return;const L=p.getTotalLength();t.f+=t.dir*t.sp*dt/L;
+  TRAFFIC.forEach(t=>{const p=$('ed'+t.e);if(!p)return;const L=p._L||(p._L=p.getTotalLength());t.f+=t.dir*t.sp*dt/L;
    if(t.f>=1||t.f<=0){const node=t.f>=1?ED[t.e][1]:ED[t.e][0],opts=ED.map((e,i)=>i).filter(i=>(ED[i][0]==node||ED[i][1]==node)&&i!==t.e&&(t.kind=='m'||ED[i][2]>=1.1)),ne=opts.length?opts[Math.floor(Math.random()*opts.length)]:t.e;
     if(ne===t.e){t.dir*=-1;t.f=Math.max(0,Math.min(1,t.f))}else{t.e=ne;if(ED[ne][0]==node){t.dir=1;t.f=0}else{t.dir=-1;t.f=1}}}
    const q=$('ed'+t.e).getPointAtLength(Math.max(0,Math.min(1,t.f))*$('ed'+t.e).getTotalLength());t.el.setAttribute('transform',`translate(${q.x},${q.y})`)});
@@ -1987,9 +1987,9 @@ function openMeta(){const m=meta(),nx=Object.keys(CAPS).map(k=>CAPS[k].xp).filte
 
 
 /* perf monitor: auto low-fx when fps stays low */
-var FXM=(function(){try{return localStorage.getItem('sm_fx')||'auto'}catch(e){return'auto'}})();
+var FXM=(function(){try{return localStorage.getItem('sm_fx')||'auto'}catch(e){return'auto'}})();AU.lite=FXM!=='hi';
 function fxApply(){document.body.classList.toggle('lowfx',FXM==='low')}
-function fxSet(m){FXM=m;try{localStorage.setItem('sm_fx',m)}catch(e){}fxApply()}
+function fxSet(m){FXM=m;AU.lite=m!=='hi';try{localStorage.setItem('sm_fx',m)}catch(e){}fxApply()}
 (function(){let n=0,t0=0,bad=0,win=0;function f(t){if(FXM!=='auto'){return}if(!t0)t0=t;n++;if(t-t0>=2000){const fps=n*1000/(t-t0);n=0;t0=t;win++;if(win>1&&!document.hidden){if(fps<38){if(++bad>=3){FXM='low';document.body.classList.add('lowfx');try{toast('⚡ הופעל מצב גרפיקה חסכוני','info')}catch(e){}return}}else bad=0}}requestAnimationFrame(f)}
 document.addEventListener('visibilitychange',()=>{t0=0;n=0});
 addEventListener('load',()=>{fxApply();requestAnimationFrame(f)})})();
