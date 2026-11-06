@@ -266,6 +266,10 @@ body.lowfx [filter],body.lowfx path[filter]{filter:none!important}
 .sc>svg.lay{position:absolute;inset:0;width:100%;height:100%;will-change:transform;transform:translateZ(0);pointer-events:none}
 .sc>svg.lay *{pointer-events:visiblePainted}
 #svgA *,#svgB *,#svgC *,#svgE *,#svgG *{pointer-events:none}
+.sc>canvas.lay{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+#svgH,#svgH *{pointer-events:none}
+#svg.storm~#svgH #dark{opacity:.5}
+.cvh{visibility:hidden}
 </style></head>
 <body>
 <div class="w">
@@ -292,11 +296,11 @@ body.lowfx [filter],body.lowfx path[filter]{filter:none!important}
 <svg id="svgB" class="lay" viewBox="0 0 800 320" preserveAspectRatio="xMidYMid slice" dir="ltr" aria-hidden="true">
 <g transform="translate(0,35)"><g class="cl"><g fill="#e4eaee" opacity=".8"><ellipse rx="50" ry="15"/><ellipse cx="30" cy="-12" rx="34" ry="16"/><ellipse cx="-28" cy="-8" rx="28" ry="12"/></g></g></g>
 <g transform="translate(0,85)"><g class="cl" style="animation-duration:120s;animation-delay:-60s"><g fill="#e4eaee" opacity=".5"><ellipse rx="60" ry="14"/><ellipse cx="25" cy="-12" rx="36" ry="15"/></g></g></g>
+<g class="gull"><path class="wing" d="M0 0Q8 -9 16 0Q24 -9 32 0" fill="none" stroke="#fff" stroke-width="2.5"/></g><g class="gull" style="animation-delay:-9s;animation-duration:26s"><path class="wing" d="M0 0Q6 -7 12 0Q18 -7 24 0" fill="none" stroke="#fff" stroke-width="2"/></g>
 </svg>
 <svg id="svgC" class="lay" viewBox="0 0 800 320" preserveAspectRatio="xMidYMid slice" dir="ltr" aria-hidden="true">
 <g opacity=".92"><g fill="#f6eedc"><ellipse cx="650" cy="78" rx="95" ry="30"/><ellipse cx="715" cy="58" rx="70" ry="28"/><ellipse cx="590" cy="88" rx="60" ry="22"/><ellipse cx="690" cy="92" rx="80" ry="20"/></g><g fill="#d6c4a2" opacity=".55"><ellipse cx="650" cy="95" rx="100" ry="9"/><ellipse cx="715" cy="76" rx="60" ry="7"/></g></g></svg>
 <svg id="svgD" class="lay" viewBox="0 0 800 320" preserveAspectRatio="xMidYMid slice" dir="ltr" aria-hidden="true">
-<g class="gull"><path class="wing" d="M0 0Q8 -9 16 0Q24 -9 32 0" fill="none" stroke="#fff" stroke-width="2.5"/></g><g class="gull" style="animation-delay:-9s;animation-duration:26s"><path class="wing" d="M0 0Q6 -7 12 0Q18 -7 24 0" fill="none" stroke="#fff" stroke-width="2"/></g>
 <g id="port" style="transition:opacity .5s"></g></svg>
 <svg id="svgE" class="lay" viewBox="0 0 800 320" preserveAspectRatio="xMidYMid slice" dir="ltr" aria-hidden="true">
 <rect y="150" width="800" height="66" fill="url(#hazeP)" pointer-events="none"/>
@@ -306,10 +310,10 @@ body.lowfx [filter],body.lowfx path[filter]{filter:none!important}
 <g opacity=".3"><path class="w1" id="wa" fill="#eef5f6"/></g>
 <g id="amb"></g><g id="g2rv"></g><g id="ship" style="transform:translate(400px,240px)"><g id="flipg" style="transition:transform .45s ease-in-out"><g id="esc"></g><g id="bob"><g id="hl" style="transition:transform .9s cubic-bezier(.3,1.5,.5,1)">
 <g id="hlart"></g><g id="bar"></g></g></g></g></g>
-<g id="fx"></g>
 <path class="w2" id="wb" fill="#0c5d83" opacity=".75"/><path class="w3" id="wc" fill="#073e5f" opacity=".85"/>
-<rect id="dark" width="800" height="320" fill="#0a1220" opacity="0"/><rect id="fl" width="800" height="320" fill="#fff" opacity="0"/>
 </svg>
+<canvas id="cv" class="lay"></canvas>
+<svg id="svgH" class="lay" viewBox="0 0 800 320" preserveAspectRatio="xMidYMid slice" dir="ltr" aria-hidden="true"><g id="fx"></g><rect id="dark" width="800" height="320" fill="#0a1220" opacity="0"/><rect id="fl" width="800" height="320" fill="#fff" opacity="0"/></svg>
 <svg id="svgG" class="lay" viewBox="0 0 800 320" preserveAspectRatio="xMidYMid slice" dir="ltr" aria-hidden="true">
 <rect width="800" height="320" fill="url(#warm)" pointer-events="none"/><rect width="800" height="320" fill="url(#vig)" pointer-events="none"/></svg>
 <div class="hud" id="hud"></div><div class="loc" id="loc"></div><div class="ban" id="ban"></div>
@@ -2016,7 +2020,41 @@ function dgFps(){if(DG.on)return;DG.on=1;const e=document.createElement('div');e
 function dgSet(k,on){const id='dg_'+k;let st=document.getElementById(id);if(st)st.remove();if(!on)return;st=document.createElement('style');st.id=id;st.textContent={anim:'*{animation:none!important;transition:none!important}',scene:'#scw{display:none!important}',map:'#mapbox,.maphint{display:none!important}',svgall:'svg{display:none!important}',shadow:'*{box-shadow:none!important;text-shadow:none!important;filter:none!important}',grad:'#svg rect[fill^="url"]{display:none!important}'}[k];document.head.appendChild(st)}
 var DGS={};
 function dgOpen(){dgFps();const b=(k,l)=>`<div class="tg"><span>${l}</span><button class="sm" onclick="DGS['${k}']=!DGS['${k}'];dgSet('${k}',DGS['${k}']);dgOpen()">${DGS[k]?'✅ כבוי':'פעיל'}</button></div>`;
- ov(`<div class="mcard"><h2>🔬 אבחון <button class="sm" onclick="openSettings()">✕</button></h2><p class="mut" style="font-size:13px">למעלה מופיע מספר פריימים לשנייה. כבה פריט, סגור חלון והסתכל אם המספר עולה ואם נהיה חלק.</p>${b('anim','כל האנימציות')}${b('scene','סצנת הים (למעלה)')}${b('map','המפה')}${b('grad','שכבות הצללה בים')}${b('shadow','צללים ופילטרים')}</div>`,'dim')}
+ ov(`<div class="mcard"><h2>🔬 אבחון <button class="sm" onclick="openSettings()">✕</button></h2><p class="mut" style="font-size:13px">למעלה מופיע מספר פריימים לשנייה. כבה פריט, סגור חלון והסתכל אם המספר עולה ואם נהיה חלק.</p><div class="tg"><span>🎨 ציור על Canvas</span><button class="sm" onclick="csSet(!CS.on);dgOpen()">${CS.on?'✅ פעיל':'כבוי'}</button></div>${b('anim','כל האנימציות')}${b('scene','סצנת הים (למעלה)')}${b('map','המפה')}${b('grad','שכבות הצללה בים')}${b('shadow','צללים ופילטרים')}</div>`,'dim')}
+
+/* ===== canvas sprite renderer: animated scene parts are rasterized once and drawn on a canvas each frame ===== */
+var CS={on:true,m:new Map(),cv:null,cx:null,css:null,defs:'',rs:0,pend:0,w:0};
+const CS_SEL='#svg #wa,#svg #wb,#svg #wc,#svg #glit>*,#svg #amb .wk,#svg #amb .amb1,#svg #amb .amb2,#svg #amb .spr,#svg #bob,#svg #esc,#svg #g2rv>*';
+function csRules(){if(CS.css)return CS.css;const out=[];for(const sh of document.styleSheets){let rl;try{rl=sh.cssRules}catch(e){continue}for(const r of rl){if(r.type===1&&r.selectorText&&!/^(body|html|\.sc|#svg|\.mm|\.menu)/.test(r.selectorText)){const cl=(r.selectorText.match(/\.[\w-]+/g)||[]).map(x=>x.slice(1));out.push([cl,r.cssText])}}}CS.css=out;return out}
+function csImg(el,k){return new Promise(res=>{try{const bb=el.getBBox();if(!(bb.width>0&&bb.height>0))return res(null);const pad=3,x=bb.x-pad,y=bb.y-pad,w=bb.width+pad*2,h=bb.height+pad*2;let W=Math.ceil(w*k),H=Math.ceil(h*k);const mx=Math.max(W,H);if(mx>4096){W=Math.ceil(W*4096/mx);H=Math.ceil(H*4096/mx)}
+ const c=el.cloneNode(true);c.removeAttribute('transform');c.removeAttribute('opacity');c.removeAttribute('id');c.classList.remove('cvh');c.style.transform='';c.style.opacity='';c.style.transition='';c.style.animation='none';
+ const cl=new Set();[c,...c.querySelectorAll('[class]')].forEach(n=>(n.getAttribute&&n.getAttribute('class')||'').split(/\s+/).forEach(t=>t&&cl.add(t)));
+ const st=csRules().filter(r=>r[0].some(t=>cl.has(t))).map(r=>r[1]).join('');
+ const svg=`<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${W}" height="${H}" viewBox="${x} ${y} ${w} ${h}"><style>${st}*{animation:none!important;transition:none!important}</style>${CS.defs}${c.outerHTML}</svg>`;
+ const im=new Image();im.onload=()=>{try{const cv=document.createElement('canvas');cv.width=W;cv.height=H;cv.getContext('2d').drawImage(im,0,0,W,H);res({cv,x,y,w,h})}catch(e){res(null)}};im.onerror=()=>res(null);im.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg)}catch(e){res(null)}})}
+function csAnc(el){let o=1;for(let n=el.parentNode;n&&n.nodeType===1&&n.tagName!=='svg';n=n.parentNode){const v=parseFloat(getComputedStyle(n).opacity);if(v<1)o*=v}return o}
+function csScan(){if(!CS.cv)return;const sc=document.querySelector('#svg');if(!sc)return;
+ if(!CS.defs){const d=document.querySelector('#svgA defs');CS.defs=d?d.outerHTML:''}
+ const dpr=Math.min(window.devicePixelRatio||1,2);
+ let all=[...document.querySelectorAll(CS_SEL)];all=all.filter(e=>!all.some(p=>p!==e&&p.contains(e)));
+ const seen=new Set(all);for(const [el,sp] of CS.m){if(!seen.has(el)||!el.isConnected){CS.m.delete(el)}}
+ for(const el of all){const sig=el.outerHTML+'|'+CS.rs;let sp=CS.m.get(el);if(sp&&sp.sig===sig)continue;if(!sp){sp={el,sig:'',img:null,ao:1};CS.m.set(el,sp)}sp.sig=sig;
+  const m=el.getScreenCTM();const k=m?Math.sqrt(Math.abs(m.a*m.d-m.b*m.c))*dpr:dpr;sp.ao=csAnc(el);CS.pend++;
+  csImg(el,k).then(r=>{CS.pend--;if(CS.m.get(el)!==sp||sp.sig!==sig)return;sp.img=r;if(CS.on)el.classList.toggle('cvh',!!r)})}}
+var csT=0;function csSoon(){clearTimeout(csT);csT=setTimeout(csScan,150)}
+function csFrame(){requestAnimationFrame(csFrame);const cv=CS.cv;if(!cv||!CS.on||document.hidden)return;const r=cv.getBoundingClientRect();if(r.width<2||r.height<2)return;
+ const dpr=Math.min(window.devicePixelRatio||1,2),W=Math.round(r.width*dpr),H=Math.round(r.height*dpr);
+ if(cv.width!==W||cv.height!==H){cv.width=W;cv.height=H;CS.rs++;csSoon()}
+ const cx=CS.cx;cx.setTransform(1,0,0,1,0,0);cx.clearRect(0,0,W,H);
+ const list=[...CS.m.values()].filter(s=>s.img).sort((a,b)=>a.el.compareDocumentPosition(b.el)&4?-1:1);
+ for(const s of list){const m=s.el.getScreenCTM();if(!m)continue;const o=s.ao*parseFloat(getComputedStyle(s.el).opacity);if(!(o>.01))continue;
+  cx.globalAlpha=o>1?1:o;cx.setTransform(m.a*dpr,m.b*dpr,m.c*dpr,m.d*dpr,(m.e-r.left)*dpr,(m.f-r.top)*dpr);const i=s.img;cx.drawImage(i.cv,i.x,i.y,i.w,i.h)}
+ cx.globalAlpha=1}
+function csSet(on){CS.on=on;try{localStorage.setItem('sm_cv',on?'1':'0')}catch(e){}if(!on){CS.cx&&CS.cx.clearRect(0,0,CS.cv.width,CS.cv.height);document.querySelectorAll('.cvh').forEach(e=>e.classList.remove('cvh'))}else{CS.m.forEach(s=>{if(s.img)s.el.classList.add('cvh')});csSoon()}}
+function csInit(){CS.cv=document.getElementById('cv');if(!CS.cv)return;CS.cx=CS.cv.getContext('2d');try{if(localStorage.getItem('sm_cv')==='0')CS.on=false}catch(e){}
+ const sv=document.getElementById('svg');new MutationObserver(csSoon).observe(sv,{subtree:true,childList:true,attributes:true,attributeFilter:['style','opacity','d','fill','transform','href']});
+ csSoon();requestAnimationFrame(csFrame)}
+addEventListener('load',()=>setTimeout(csInit,50));
 </script>
 </body>
 </html>
