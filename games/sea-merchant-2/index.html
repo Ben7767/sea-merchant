@@ -269,7 +269,7 @@ body.lowfx [filter],body.lowfx path[filter]{filter:none!important}
 .sc>canvas.lay{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
 #svgH,#svgH *{pointer-events:none}
 #svg.storm~#svgH #dark{opacity:.5}
-.cvh{visibility:hidden}
+.cvh,.cvh *{visibility:hidden;animation:none!important}
 </style></head>
 <body>
 <div class="w">
@@ -2033,26 +2033,45 @@ function csImg(el,k){return new Promise(res=>{try{const bb=el.getBBox();if(!(bb.
  const svg=`<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="${W}" height="${H}" viewBox="${x} ${y} ${w} ${h}"><style>${st}*{animation:none!important;transition:none!important}</style>${CS.defs}${c.outerHTML}</svg>`;
  const im=new Image();im.onload=()=>{try{const cv=document.createElement('canvas');cv.width=W;cv.height=H;cv.getContext('2d').drawImage(im,0,0,W,H);res({cv,x,y,w,h})}catch(e){res(null)}};im.onerror=()=>res(null);im.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svg)}catch(e){res(null)}})}
 function csAnc(el){let o=1;for(let n=el.parentNode;n&&n.nodeType===1&&n.tagName!=='svg';n=n.parentNode){const v=parseFloat(getComputedStyle(n).opacity);if(v<1)o*=v}return o}
+/* sample a CSS animation once into a table, so playback needs no DOM style work */
+function csSample(el,an){try{const tm=an.effect.getComputedTiming(),D=tm.duration,alt=/alternate/.test(tm.direction),P=alt?D*2:D;if(!(P>0)||!isFinite(P))return null;
+ const K=P>20000?240:96,cs0=getComputedStyle(el),sp=new Float32Array(K*7),ct=an.currentTime,st=an.startTime;an.pause();
+ let org=[0,0];{const to=cs0.transformOrigin.split(' ').map(parseFloat);let ox=to[0]||0,oy=to[1]||0;if(cs0.transformBox==='fill-box'){try{const bb=el.getBBox();ox+=bb.x;oy+=bb.y}catch(e){}}org=[ox,oy]}
+ for(let i=0;i<K;i++){an.currentTime=tm.delay+(i/K)*P;const cs=getComputedStyle(el),t=cs.transform,m=(!t||t==='none')?new DOMMatrix():new DOMMatrix(t);sp.set([m.a,m.b,m.c,m.d,m.e,m.f,parseFloat(cs.opacity)],i*7)}
+ an.currentTime=ct;an.play();return{sp,K,P,delay:tm.delay,start:st==null?document.timeline.currentTime:st,org}}catch(e){return null}}
+function csM(e){const m=e.getScreenCTM();return m?DOMMatrix.fromMatrix(m):null}
+function csRoot(){return csM(document.getElementById('svg'))}
 function csScan(){if(!CS.cv)return;const sc=document.querySelector('#svg');if(!sc)return;
  if(!CS.defs){const d=document.querySelector('#svgA defs');CS.defs=d?d.outerHTML:''}
  const dpr=Math.min(window.devicePixelRatio||1,2);
  let all=[...document.querySelectorAll(CS_SEL)];all=all.filter(e=>!all.some(p=>p!==e&&p.contains(e)));
  const seen=new Set(all);for(const [el,sp] of CS.m){if(!seen.has(el)||!el.isConnected){CS.m.delete(el)}}
- for(const el of all){const sig=el.outerHTML+'|'+CS.rs;let sp=CS.m.get(el);if(sp&&sp.sig===sig)continue;if(!sp){sp={el,sig:'',img:null,ao:1};CS.m.set(el,sp)}sp.sig=sig;
-  const m=el.getScreenCTM();const k=m?Math.sqrt(Math.abs(m.a*m.d-m.b*m.c))*dpr:dpr;sp.ao=csAnc(el);CS.pend++;
+ const R=csRoot();if(!R)return;const Ri=R.inverse();
+ for(const el of all){const h=el.outerHTML.replace(/ ?cvh/,''),sig=h+'|'+CS.rs;let sp=CS.m.get(el);if(sp&&sp.sig===sig)continue;const same=sp&&sp.h===h;if(!sp){sp={el,sig:'',h:'',img:null,ao:1};CS.m.set(el,sp)}sp.sig=sig;
+  if(!same){el.classList.remove('cvh');el.getBoundingClientRect()}sp.h=h;
+  const ans=el.getAnimations({subtree:false}).filter(a=>a.effect&&a.effect.getKeyframes&&a.transitionProperty===undefined);
+  sp.live=!!el.closest('#ship,#g2rv');if(!same)sp.mo=ans.length?csSample(el,ans[0]):null;
+  sp.rel=null;if(!sp.live){const m=csM(sp.mo?el.parentNode:el);if(m)sp.rel=Ri.multiply(m)}
+  const m0=csM(el);const k=m0?Math.sqrt(Math.abs(m0.a*m0.d-m0.b*m0.c))*dpr:dpr;sp.ao=csAnc(el);CS.pend++;
   csImg(el,k).then(r=>{CS.pend--;if(CS.m.get(el)!==sp||sp.sig!==sig)return;sp.img=r;if(CS.on)el.classList.toggle('cvh',!!r)})}}
 var csT=0;function csSoon(){clearTimeout(csT);csT=setTimeout(csScan,150)}
 function csFrame(){requestAnimationFrame(csFrame);const cv=CS.cv;if(!cv||!CS.on||document.hidden)return;const r=cv.getBoundingClientRect();if(r.width<2||r.height<2)return;
  const dpr=Math.min(window.devicePixelRatio||1,2),W=Math.round(r.width*dpr),H=Math.round(r.height*dpr);
  if(cv.width!==W||cv.height!==H){cv.width=W;cv.height=H;CS.rs++;csSoon()}
  const cx=CS.cx;cx.setTransform(1,0,0,1,0,0);cx.clearRect(0,0,W,H);
- const list=[...CS.m.values()].filter(s=>s.img).sort((a,b)=>a.el.compareDocumentPosition(b.el)&4?-1:1);
- for(const s of list){const m=s.el.getScreenCTM();if(!m)continue;const o=s.ao*parseFloat(getComputedStyle(s.el).opacity);if(!(o>.01))continue;
-  cx.globalAlpha=o>1?1:o;cx.setTransform(m.a*dpr,m.b*dpr,m.c*dpr,m.d*dpr,(m.e-r.left)*dpr,(m.f-r.top)*dpr);const i=s.img;cx.drawImage(i.cv,i.x,i.y,i.w,i.h)}
+ const R=csRoot();if(!R)return;const T=document.timeline.currentTime;
+ if(!CS.ord||CS.ordN!==CS.m.size||CS.ordV!==CS.rs+'|'+CS.pend){CS.ord=[...CS.m.values()].sort((a,b)=>a.el.compareDocumentPosition(b.el)&4?-1:1);CS.ordN=CS.m.size;CS.ordV=CS.rs+'|'+CS.pend}
+ for(const s of CS.ord){if(!s.img)continue;let M,o=s.ao;const mo=s.mo;
+  if(mo){const par=s.live?(()=>{const p=csM(s.el.parentNode);return p?R.inverse().multiply(p):null})():s.rel;if(!par)continue;
+   let ph=((T-mo.start-mo.delay)%mo.P+mo.P)%mo.P/mo.P*mo.K;const i0=Math.floor(ph)%mo.K,i1=(i0+1)%mo.K,f=ph-Math.floor(ph),a=mo.sp,A=i0*7,B=i1*7;
+   const g=j=>a[A+j]+(a[B+j]-a[A+j])*f;o*=g(6);if(!(o>.01))continue;
+   const an=new DOMMatrix([g(0),g(1),g(2),g(3),g(4),g(5)]);M=par.translate(mo.org[0],mo.org[1]).multiply(an).translate(-mo.org[0],-mo.org[1])}
+  else{if(s.live){const p=csM(s.el);if(!p)continue;M=R.inverse().multiply(p)}else M=s.rel;o*=parseFloat(getComputedStyle(s.el).opacity);if(!(o>.01))continue}
+  const F=R.multiply(M);cx.globalAlpha=o>1?1:o;cx.setTransform(F.a*dpr,F.b*dpr,F.c*dpr,F.d*dpr,(F.e-r.left)*dpr,(F.f-r.top)*dpr);const i=s.img;cx.drawImage(i.cv,i.x,i.y,i.w,i.h)}
  cx.globalAlpha=1}
 function csSet(on){CS.on=on;try{localStorage.setItem('sm_cv',on?'1':'0')}catch(e){}if(!on){CS.cx&&CS.cx.clearRect(0,0,CS.cv.width,CS.cv.height);document.querySelectorAll('.cvh').forEach(e=>e.classList.remove('cvh'))}else{CS.m.forEach(s=>{if(s.img)s.el.classList.add('cvh')});csSoon()}}
 function csInit(){CS.cv=document.getElementById('cv');if(!CS.cv)return;CS.cx=CS.cv.getContext('2d');try{if(localStorage.getItem('sm_cv')==='0')CS.on=false}catch(e){}
- const sv=document.getElementById('svg');new MutationObserver(csSoon).observe(sv,{subtree:true,childList:true,attributes:true,attributeFilter:['style','opacity','d','fill','transform','href']});
+ const sv=document.getElementById('svg');new MutationObserver(ms=>{if(ms.some(m=>m.attributeName!=='class'||(m.oldValue||'').replace(/\bcvh\b/,'').trim()!==(m.target.getAttribute('class')||'').replace(/\bcvh\b/,'').trim()))csSoon()}).observe(sv,{subtree:true,childList:true,attributes:true,attributeFilter:['style','opacity','d','fill','transform','href','class'],attributeOldValue:true});
  csSoon();requestAnimationFrame(csFrame)}
 addEventListener('load',()=>setTimeout(csInit,50));
 </script>
