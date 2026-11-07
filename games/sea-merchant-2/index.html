@@ -899,10 +899,11 @@ function buildAmbient(){const g=$('amb');if(!g)return;g.innerHTML=`<g transform=
 const MERCH=`<g transform="scale(-.95,.95)">${ship(1,{hull:'#6a4a2a',trim:'#2e8f4a',flag:'#2e8f4a',sail:'#fff6dc',coat:'#2e8f4a'})}</g>`;
 function tipHtml(){const j=S.tipPort;return j>=0?`<g class="mb"><text x="${SP[j][2]-6}" y="${SP[j][3]-18}" font-size="22">💰</text></g>`:''}
 async function evTrader(){$('fx').innerHTML=`<g id="tr" style="transform:translate(1000px,240px);transition:transform 1.3s ease-out">${MERCH}</g>`;$('tr').getBoundingClientRect();$('tr').style.transform='translate(650px,240px)';
- sfx('bell');speak('ספינת סוחר מתקרבת. הם רוצים לסחור!','joy');await sleep(1300);await banner('ספינת סוחר!',800);
+ let sunk=false;sfx('bell');speak('ספינת סוחר מתקרבת. הם רוצים לסחור!','joy');await sleep(1300);await banner('ספינת סוחר!',800);
  for(let again=true;again;){again=false;
-  const c=await choose('🚢 ספינת סוחרים','הקפטן מנופף לשלום ומציע עסקאות.',[['💰 למכור להם מטען','מחיר גבוה ב־20%'],['🛒 לקנות מהם סחורה','מחיר נמוך ב־15%'],['🗞️ לשמוע חדשות','רמז על הזדמנות או סכנה'],['👋 להמשיך','בלי עסקה']]);
-  if(c==0){const tot=GOODS.reduce((s,g,i)=>s+S.cargo[g.k]*S.prices[i],0);
+  const c=await choose('🚢 ספינת סוחרים','הקפטן מנופף לשלום ומציע עסקאות.',[['💰 למכור להם מטען','מחיר גבוה ב־20%'],['🛒 לקנות מהם סחורה','מחיר נמוך ב־15%'],['🗞️ לשמוע חדשות','רמז על הזדמנות או סכנה'],['👋 להמשיך','בלי עסקה'],['⚔️ לתקוף את הסוחר',solN()?`${solN()} חיילים · שם רע`:'צריך חיילים']]);
+  if(c==4){sunk=await attackMerchant();again=!sunk&&solN()>0&&false}
+  else if(c==0){const tot=GOODS.reduce((s,g,i)=>s+S.cargo[g.k]*S.prices[i],0);
    if(load()<=0){toast('אין לך מטען למכור לסוחר.','bad');sfx('err');again=true}
    else{const r=Math.round(tot*1.2);GOODS.forEach(g=>S.cargo[g.k]=0);S.cash+=r;scene();coins(650,245,12);say(`מכרת לסוחר את כל המטען ב־${fmt(r)} (20% מעל השוק).`,'good');toast(`💰 הסוחר שילם ${fmt(r)}!`,'good')}}
   else if(c==1){const gi=Math.floor(Math.random()*GOODS.length),g=GOODS[gi],price=Math.max(1,Math.round(S.prices[gi]*.85)),room=CAP-load(),can=Math.floor(S.cash/price);
@@ -912,7 +913,7 @@ async function evTrader(){$('fx').innerHTML=`<g id="tr" style="transform:transla
   else if(c==2){let j;do{j=Math.floor(Math.random()*SP.length)}while(j===S.loc);let k=0;GOODS.forEach((_,x)=>{if(MU[j][x]>MU[j][k])k=x});S.tipPort=j;qmark();
    toast(`🗞️ הסוחר לוחש: ב${LOCS[j]} ${GOODS[k].e} ${GOODS[k].n} נמכר ביוקר! סימנתי לך את הנמל במפה.`,'info');
    const pr=TRAFFIC.find(t=>t.kind=='p');if(pr)setTimeout(()=>toast(`🏴‍☠️ ושמעתי ששודדים סורקים בין ${LOCS[ED[pr.e][0]]} ל${LOCS[ED[pr.e][1]]}.`,'warn'),1200);say(`הסוחר סיפר: ב${LOCS[j]} ${GOODS[k].n} נמכר ביוקר.`)}}
- const tr=$('tr');if(tr){tr.style.transition='transform 1.4s ease-in';tr.style.transform='translate(1000px,240px)'}await sleep(1300);$('fx').innerHTML=''}
+ const tr=$('tr');if(tr){tr.style.transition='transform 1.4s ease-in';tr.style.transform=sunk?'translate(650px,420px) rotate(28deg)':'translate(1000px,240px)'}await sleep(1300);$('fx').innerHTML=''}
 
 function portView(d){return new Promise(res=>{const p=PAL[d],line=arriveLine(d);let done=false;
  const el=document.createElement('div');el.className='pv';
@@ -1332,7 +1333,7 @@ function g2chip(i){const p=G2.p[i],act=G2.cur===i,w=wealthOf(p);return `<span cl
 
 var GUNS=[['תותחים קלים',0],['תותחי ברונזה',2500],['תותחים כבדים',7000],['קולברינות',16000],['תותחי ענק',32000]];
 function gunLv(){return Math.max(0,Math.min(4,(S&&S.gun)|0))}
-function gunWin(){return .06*gunLv()+.04*((S&&S.lv)|0)}
+function gunWin(){return .06*gunLv()+.04*((S&&S.lv)|0)+Math.min(.2,(typeof solPow=='function'?solPow():0)*.01)}
 function gunEsc(){return .04*gunLv()+.03*((S&&S.lv)|0)}
 function gunDet(){return Math.max(.45,1-.07*gunLv()-.04*((S&&S.lv)|0))}
 function gunCard(){const L=gunLv(),N=GUNS[L+1],base=Math.min(97,Math.round((.35+gunWin())*100));return `<div class="card" style="padding:4px 10px"><div class="row"><span style="font-size:12px"><b>💣 ${GUNS[L][0]}</b> <span class="mut" style="font-size:10.5px">→ ${N?N[0]:''}</span> ${'💥'.repeat(L+1)}<br><span class="mut" style="font-size:10.5px">קרב ~${base}% · בריחה ${Math.round((.45+gunEsc())*100)}% · התקפות −${Math.round((1-gunDet())*100)}%</span></span>${N?`<button class="a" style="padding:3px 8px" ${S.busy?'disabled':''} onclick="upgradeGun()" title="${N[0]}">🔫 ${fmt(N[1])}</button>`:'<span class="good">🏆 מקסימלי</span>'}</div></div>`}
@@ -1471,7 +1472,7 @@ const CHANCE=[
 async function propEvents(){const m=ownMap(),me=myIdx();
  if(Math.random()<.5){const c=CHANCE[Math.floor(Math.random()*CHANCE.length)];const r=c[2]();hud();await choose('🎴 קלף הזדמנות · '+c[0],`${c[1]}<br><b>${r}</b>`,[['אוקיי','']])}
  const mine=Object.keys(m).filter(k=>m[k].o===me);
- if(mine.length&&Math.random()<.2){const k=mine[Math.floor(Math.random()*mine.length)],e=m[k],def=Math.min(.9,.25+.14*gunLv()+(e.a&&e.a.f?.35:0));sfx('warn');
+ if(mine.length&&Math.random()<.2){const k=mine[Math.floor(Math.random()*mine.length)],e=m[k],def=Math.min(.92,.25+.14*gunLv()+(e.a&&e.a.f?.35:0)+Math.min(.3,(e.g|0)*.03));sfx('warn');
   if(Math.random()<def){const loot=250+gunLv()*100;S.cash+=loot;S.rr=(S.rr||0)+1;hud();await choose('🏴‍☠️ פשיטה על '+LOCS[k],`שודדי ים תקפו את הנמל שלך, אבל התותחים והמשמר הדפו אותם! השלל שנתפס: <b>+${fmt(loot)}</b>.`,[['⚔️ ניצחון','']])}
   else{let t;if(e.r>0){e.r--;t=`הם הרסו חדר במלון. נשארו ${e.r} חדרים.`}else{const l=Math.min(S.cash,200);S.cash-=l;t=`הם שדדו ${fmt(l)} מהקופה.`}hud();try{renderHotel(false);qmark()}catch(er){}await choose('🏴‍☠️ פשיטה על '+LOCS[k],`שודדי ים פשטו על הנמל שלך! ${t}<br><span class="mut">תותחים חזקים ומצודה מקטינים את הסיכון.</span>`,[['😠 אוי','']])}}}
 
@@ -1493,7 +1494,7 @@ function kIdx(p){if(G2&&G2.on){const i=G2.p.indexOf(p);return i<0?(p===S?G2.cur:
 function kOwn(p){const m=(G2&&G2.on)?G2.own:p.own1,i=kIdx(p),r={n:0,rooms:0,am:0};if(!m)return r;Object.keys(m).forEach(k=>{const e=m[k];if(e&&e.o===i){r.n++;r.rooms+=e.r;if(e.a)Object.keys(e.a).forEach(x=>{if(e.a[x])r.am++})}});return r}
 function kPts(p,path){const o=kOwn(p);
  if(path===0)return (p.ct?p.ct.done:0)+Math.floor((p.rentIn||0)/600)+Math.floor(o.n/2)+Math.floor((p.prodTotal||0)/120);
- if(path===1)return (p.pw||0)+(p.rr||0)+Math.floor((p.gun||0)*1.5)+2*(p.bo||0);
+ if(path===1)return (p.pw||0)+(p.rr||0)+(p.att||0)+2*(p.cap||0)+Math.floor((p.gun||0)*1.5)+2*(p.bo||0);
  return Math.floor(o.rooms*.6)+2*o.am+Math.floor(Object.keys(p.seen||{}).length/2)}
 function kBar(p,path,label){const v=kPts(p,path),w=Math.min(100,Math.round(v/KTARGET*100));return `<div style="display:flex;align-items:center;gap:6px;font-size:11.5px;margin:2px 0"><span style="width:84px">${KPATH[path][1]}</span><div style="flex:1;height:9px;background:#0001;border-radius:5px;overflow:hidden"><div style="width:${w}%;height:100%;background:${KPATH[path][2]};border-radius:5px;transition:width .6s"></div></div><b style="width:38px;text-align:left" dir="ltr">${v}/${KTARGET}</b></div>`}
 function kingCard(){const two=G2&&G2.on;let h=`<div class="card hcard" style="padding:6px 10px"><b>👑 דרכים לממלכה</b> <span class="mut" style="font-size:11px">· הראשון שמגיע ל־${KTARGET} נקודות בדרך אחת מנצח מיד</span>`;
@@ -2133,6 +2134,71 @@ function wavesTick(){const c=AU.ctx;if(!c||c.state!=='running'||!AU.sound||!AU.a
  const r=Math.random();if(m==='port'){if(r<.16)sfx('gull',R(.2,1.5));else if(r<.24)sfx('creak',.5)}else if(m==='sail'){if(r<.3)sfx('creak',R(0,1.2));else if(r<.4)sfx('splash',R(0,1))}else if(m==='storm'&&r<.35)sfx('splash',R(0,.8))}
 setInterval(wavesTick,800);
 (function(){const old=window.mmark;if(typeof old!=='function')return;window.mmark=function(ei,rev,e){try{sfx({'🏴‍☠️':'stingP','⛈️':'stingS','🛟':'stingW','💧':'stingL'}[e]||'riser')}catch(x){}return old.apply(this,arguments)}})();
+// ===== ARMY v1.4: soldiers, barracks, garrisons, raids =====
+var TRN=[['טירונים',0],['חיילים מאומנים',1800],['לוחמים ותיקים',5000],['חיל מובחר',12000]];
+function solN(){return Math.max(0,(S&&S.sol)|0)}
+function solTr(){return Math.max(0,Math.min(3,(S&&S.str)|0))}
+function solPow(){return solN()*(1+.3*solTr())}
+function solCap(){return 10+10*((S&&S.lv)|0)}
+function solPrice(){return 90+15*solTr()}
+function garTot(){const m=ownMap(),me=myIdx();let n=0;Object.keys(m).forEach(k=>{if(m[k]&&m[k].o===me)n+=(m[k].g|0)});return n}
+function armyHurt(f){const n=solN();const l=Math.min(n,Math.max(n?1:0,Math.round(n*f)));S.sol=n-l;return l}
+function armyRaidAttackPow(){return solPow()+gunLv()*1.5}
+function portDef(e,k){const ai=aiOn()&&e.o===1?4+(S.day||1)*.12:0;return 5+3*e.r+(e.a&&e.a.f?12:0)+(e.g|0)*1.3+ai}
+function oddsOf(a,d){return Math.max(.08,Math.min(.92,.1+.82*a/(a+d)))}
+function armyCard(){const n=solN(),cap=solCap(),T=TRN[solTr()],N=TRN[solTr()+1],p=solPrice();
+ const b=q=>{const c=q*p,room=cap-n;return `<button class="s" style="padding:3px 7px" ${S.busy||S.cash<c||room<q?'disabled':''} onclick="buySol(${q})">+${q}<br><small>${fmt(c)}</small></button>`};
+ return `<div class="card hcard" style="padding:4px 10px"><div class="row"><span style="font-size:12px"><b>⚔️ צריף חיילים</b> <span class="mut" style="font-size:10.5px">${T[0]}</span><br><span class="mut" style="font-size:10.5px">על הספינה ${n}/${cap} · בנמלים ${garTot()} · כוח ${solPow().toFixed(1)} · החזקה ${fmt((n+garTot())*1)}/יום${(S.inf|0)?` · 💀 שם רע ${S.inf}`:''}</span></span><span style="display:flex;gap:4px">${b(1)}${b(5)}${b(10)}</span></div>${N?`<div class="row" style="margin-top:3px"><span class="mut" style="font-size:11px">🎖️ אימון → ${N[0]} (+30% כוח לחייל)</span><button class="a" style="padding:3px 8px" ${S.busy||S.cash<N[1]?'disabled':''} onclick="trainSol()">🎖️ ${fmt(N[1])}</button></div>`:`<div class="good" style="font-size:11px">🏆 חיל מובחר</div>`}</div>`}
+function buySol(q){if(S.busy)return;const c=q*solPrice();if(solN()+q>solCap()){toast('אין מקום לעוד חיילים על הספינה.','bad');sfx('err');return}if(S.cash<c){toast(`צריך ${fmt(c)}.`,'bad');sfx('err');return}
+ S.cash-=c;S.sol=solN()+q;sfx('drum');sfx('cash',.3);toast(`⚔️ גייסת ${q} חיילים.`,'good');say(`גייסת ${q} חיילים ב־${fmt(c)}.`,'good');hud();draw()}
+function trainSol(){if(S.busy)return;const N=TRN[solTr()+1];if(!N)return;if(S.cash<N[1]){toast(`צריך ${fmt(N[1])}.`,'bad');sfx('err');return}S.cash-=N[1];S.str=solTr()+1;sfx('upgrade');toast(`🎖️ החיילים שלך הפכו ל${N[0]}!`,'good');say(`אימון: ${N[0]}.`,'good');hud();draw()}
+{const _y=yard;yard=function(){return _y()+armyCard()}}
+// port: garrison, barracks, attack
+function armyPortCard(){if(!S||S.busy&&false)return'';const i=S.loc,e=ownMap()[i],me=myIdx();if(!e)return'';
+ if(e.o===me){const g=e.g|0,gc=20,n=solN(),brc=1500+pDeg(i)*100;
+  let h=`<div class="card hcard" style="padding:5px 10px"><div class="row"><span style="font-size:12px"><b>🛡️ חיל מצב ב${LOCS[i]}</b><br><span class="mut" style="font-size:10.5px">${g}/${gc} חיילים · הגנה ${portDef(e,i).toFixed(1)}${e.br?' · 🏯 צריף מייצר '+(1+(e.br>1?1:0))+' ליום':''}</span></span><span style="display:flex;gap:4px"><button class="s" style="padding:3px 7px" ${S.busy||n<1||g>=gc?'disabled':''} onclick="garMove(1)">⬇️ הצב<br><small>1</small></button><button class="s" style="padding:3px 7px" ${S.busy||n<5||g>=gc?'disabled':''} onclick="garMove(5)">⬇️ הצב<br><small>5</small></button><button class="s" style="padding:3px 7px" ${S.busy||g<1||n>=solCap()?'disabled':''} onclick="garMove(-5)">⬆️ קח<br><small>5</small></button></span></div>`;
+  if(!e.br)h+=`<div class="row" style="margin-top:3px"><span class="mut" style="font-size:11px">🏯 צריף בנמל: מייצר חייל ליום בחינם לחיל המצב${e.r<1?' (דורש חדר אחד)':''}</span><button class="a" style="padding:3px 8px" ${S.busy||e.r<1||S.cash<brc?'disabled':''} onclick="buildBar()">🏯 ${fmt(brc)}</button></div>`;
+  else if(e.br<2){const c2=brc*2;h+=`<div class="row" style="margin-top:3px"><span class="mut" style="font-size:11px">🏯 הרחבת הצריף: שני חיילים ליום</span><button class="a" style="padding:3px 8px" ${S.busy||S.cash<c2?'disabled':''} onclick="buildBar()">🏯 ${fmt(c2)}</button></div>`}
+  return h+'</div>'}
+ const two=(G2&&G2.on)||aiOn();if(!two)return'';const d=portDef(e,i),a=armyRaidAttackPow(),p=Math.round(oddsOf(a,d)*100),n=solN();
+ return `<div class="card hcard" style="padding:5px 10px"><div class="row"><span style="font-size:12px"><b>⚔️ תקיפת הנמל של ${esc(ownerName(e.o))}</b><br><span class="mut" style="font-size:10.5px">הגנה ${d.toFixed(1)} · הכוח שלך ${a.toFixed(1)} · סיכוי ~${p}%${G2&&G2.net?' (חיל המצב שלו נסתר)':''}</span></span><button class="a" style="padding:3px 8px;background:#b0302a;color:#fff" ${S.busy||n<1?'disabled':''} onclick="propAttack()">⚔️ תקוף</button></div>${n<1?'<div class="mut" style="font-size:11px">צריך חיילים על הספינה.</div>':''}</div>`}
+function garMove(q){if(S.busy)return;const e=ownMap()[S.loc];if(!e||e.o!==myIdx())return;if(q>0){q=Math.min(q,solN(),20-(e.g|0));if(q<=0)return;S.sol=solN()-q;e.g=(e.g|0)+q}else{q=Math.min(-q,e.g|0,solCap()-solN());if(q<=0)return;e.g-=q;S.sol=solN()+q}sfx('drum');hud();draw()}
+function buildBar(){if(S.busy)return;const i=S.loc,e=ownMap()[i];if(!e||e.o!==myIdx())return;const c=(1500+pDeg(i)*100)*(e.br?2:1);if(S.cash<c){toast(`צריך ${fmt(c)}.`,'bad');sfx('err');return}S.cash-=c;e.br=(e.br|0)+1;sfx('hammer');toast(`🏯 הצריף ב${LOCS[i]} ${e.br>1?'הורחב':'נבנה'}.`,'good');say(`צריף ב${LOCS[i]}.`,'good');hud();draw()}
+async function propAttack(){if(S.busy)return;const i=S.loc,m=ownMap(),e=m[i],me=myIdx();if(!e||e.o===me||!((G2&&G2.on)||aiOn()))return;if(solN()<1){toast('אין חיילים.','bad');sfx('err');return}
+ const d=portDef(e,i),a=armyRaidAttackPow(),p=oddsOf(a,d),on=e.o,ow=(G2&&G2.on)?G2.p[on]:null;
+ const c=await choose('⚔️ תקיפה',`לתקוף את ${LOCS[i]} של ${esc(ownerName(on))} עם ${solN()} חיילים? סיכוי ~${Math.round(p*100)}%. בהפסד תאבד חלק גדול מהחיילים.`,[['⚔️ תקוף!',''],['↩ לבטל','']]);if(c!==0)return;
+ S.busy=1;sfx('horn');sfx('drum',.3);sfx('cannon',.6);await sleep(900);
+ const win=Math.random()<p;let t;
+ if(win){const loot=Math.round(200+e.r*150),paid=ow?Math.min(loot,Math.max(0,ow.cash|0)):(aiOn()?Math.min(loot,Math.max(0,S.rival.cash|0)):loot);
+  if(ow)ow.cash-=paid;else if(aiOn())S.rival.cash-=paid;S.cash+=paid;const lost=armyHurt(.15+d/(a+d)*.15);
+  e.o=me;delete e.m;e.pd=0;e.r=Math.max(0,e.r-1);const stay=Math.floor(solN()*.25);S.sol=solN()-stay;e.g=stay;e.v=Date.now();S.cap=(S.cap|0)+1;
+  if(G2&&G2.net)netTell('raid',{port:i,n:S.name,cap:1,to:on});else if(ow)ow.news=(ow.news||[]).concat(`⚔️ ${esc(S.name)} כבש ממך את נמל ${LOCS[i]}!`);
+  sfx('jingle');sfx('cash',.4);t=`🏴 כבשת את ${LOCS[i]}! שלל ${fmt(paid)}, אבדו ${lost} חיילים, ${stay} נשארו כחיל מצב.`;toast(t,'good');speak(`הנמל ${LOCS[i]} נכבש!`,'joy')}
+ else{const lost=armyHurt(.4+Math.random()*.25);if(e.g)e.g=Math.floor(e.g*.7);if(G2&&G2.net)netTell('raid',{port:i,n:S.name,cap:0,to:on});else if(ow)ow.news=(ow.news||[]).concat(`🛡️ הדפת התקפה של ${esc(S.name)} על ${LOCS[i]}.`);
+  sfx('stab');t=`⚔️ ההתקפה נכשלה. אבדו ${lost} חיילים.`;toast(t,'bad')}
+ say(t,win?'good':'bad');S.busy=0;try{renderHotel(true);qmark()}catch(x){}hud();draw()}
+// sea: attack merchants
+async function attackMerchant(){if(solN()<1){toast('צריך חיילים כדי לתקוף.','bad');sfx('err');return false}
+ const a=solPow()+gunLv()*2+((S.lv|0)),d=R(6,14),p=oddsOf(a,d);sfx('cannon');sfx('cannon',.3);await sleep(700);
+ S.inf=(S.inf|0)+1;
+ if(Math.random()<p){const lost=armyHurt(.05+Math.random()*.12),loot=Math.round(R(250,600)*(1+(S.lv|0)*.5));S.cash+=loot;const room=CAP-load();let gtxt='';if(room>0){const g=pick(GOODS),q=Math.min(room,Math.round(R(15,40)));S.cargo[g.k]+=q;gtxt=` ו־${q} טון ${g.n}`}
+  S.att=(S.att|0)+1;sfx('boom',.4);sfx('cash',.6);scene();say(`ניצחת את הסוחר. שלל: ${fmt(loot)}${gtxt}. אבדו ${lost} חיילים.`,'good');toast(`⚔️ השלל: +${fmt(loot)}${gtxt}`,'good');hud();return true}
+ const lost=armyHurt(.2+Math.random()*.2);lose(.2);try{hullHit(8,'הסוחר ירה בחזרה')}catch(x){}sfx('stab');say(`התקיפה נכשלה. אבדו ${lost} חיילים וחלק מהמטען.`,'bad');toast('⚔️ התקיפה נכשלה','bad');hud();return false}
+// upkeep, production, infamy, vasco raids on arrival
+{const _pa=propArrive;propArrive=async function(d0){const dd=S.iday==null?0:Math.max(0,Math.min(10,S.day-S.iday));await _pa(d0);if(S.over)return;
+ try{if(dd>0){const m=ownMap(),me=myIdx();Object.keys(m).forEach(k=>{const e=m[k];if(e&&e.o===me&&e.br){const add=Math.min(20-(e.g|0),dd*(e.br>1?2:1));if(add>0)e.g=(e.g|0)+add}});
+  const up=(solN()+garTot())*dd;if(up>0){const pay=Math.min(S.cash,up);S.cash-=pay;if(pay<up){const dz=Math.max(1,Math.ceil(solN()*.2));S.sol=Math.max(0,solN()-dz);toast(`⚠️ לא היה כסף לשכר, ${dz} חיילים ערקו.`,'bad')}else if(up>=5)toast(`⚔️ שכר חיילים: −${fmt(up)}`,'info')}
+  if(S.inf>0){S.inf=Math.max(0,S.inf-Math.floor(dd/4));const fee=Math.min(S.cash,S.inf*25);if(fee>0&&Math.random()<.5){S.cash-=fee;toast(`💀 שם רע: שומרי הנמל דרשו ${fmt(fee)}.`,'warn')}}
+  hud()}
+  if(dd>0&&aiOn()&&S.rival.pers==='aggr'&&Math.random()<.14){const m=ownMap(),mine=Object.keys(m).filter(k=>m[k]&&m[k].o===0&&!m[k].m);
+   if(mine.length){const k=+pick(mine),e=m[k],d=portDef(e,k),a=R(8,16)+(S.day||1)*.35;sfx('horn');
+    if(Math.random()<oddsOf(a,d)){e.o=1;delete e.a;e.g=0;sfx('drum');await choose('🏴 ואסקו כבש נמל!',`ואסקו תקף את ${LOCS[k]} ולקח אותו. כדאי לחזק את חיל המצב ולתקוף בחזרה.`,[['😠 אוי','']]);try{qmark();renderHotel(false)}catch(x){}}
+    else{e.g=Math.floor((e.g|0)*.7);toast(`🛡️ הדפתם את ההתקפה של ואסקו על ${LOCS[k]}!`,'good');say('ואסקו תקף והודף.','good')}}}}catch(er){console.error(er)}
+ try{draw()}catch(x){}}}
+{const _pc=propCards;propCards=function(){return _pc()+armyPortCard()}}
+{const _ev=evPirate;evPirate=async function(n){const s0=solN(),p0=S.pw|0,w0=wealth();await _ev(n);if(s0>0&&solN()>0){if((S.pw|0)>p0)armyHurt(.05+Math.random()*.1);else if(wealth()<w0*.9)armyHurt(.25+Math.random()*.2);hud()}}}
+{const _nae=netApplyEv;netApplyEv=function(e,from){if(e.t==='raid'){if(e.to!=null&&e.to!==G2.cur)return;const q=ownMap()[e.port];if(e.cap){if(q&&q.o===G2.cur){q.o=from;q._sg='in';q.g=0}sfx('drum');const tx=`⚔️ ${e.n} כבש ממך את נמל ${LOCS[e.port]}!`;toast(tx,'bad');say(tx,'bad');banner(tx);try{renderHotel(false);qmark()}catch(x){}}
+ else{if(q)q.g=Math.floor((q.g|0)*.7);toast(`🛡️ הדפת התקפה של ${e.n} על ${LOCS[e.port]}!`,'good');say(`הדפת התקפה על ${LOCS[e.port]}.`,'good')}hud();return}return _nae.apply(this,arguments)}}
 </script>
 </body>
 </html>
