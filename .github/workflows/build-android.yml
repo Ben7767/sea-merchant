@@ -26,6 +26,7 @@ jobs:
         run: |
           set -a; . games/${{ matrix.game }}/game.env; set +a
           mkdir -p android/app/src/main/assets
+          if [ -d games/${{ matrix.game }}/icons ]; then cp -r games/${{ matrix.game }}/icons/* android/app/src/main/res/; fi
           cp games/${{ matrix.game }}/index.html android/app/src/main/assets/index.html
           { echo "G_ID=$APP_ID"; echo "G_NAME=$APP_NAME"; echo "G_VC=$VERSION_CODE"; echo "G_VN=$VERSION_NAME"; } >> "$GITHUB_ENV"
       - name: Decode upload keystore (only if secrets exist)
