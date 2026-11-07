@@ -1130,7 +1130,7 @@ function decorateMenu(){const o=OV;if(!o)return;const bg=o.querySelector('.mm');
 
 // ===== ZOOM =====
 let ZM=1;
-const baseW=()=>{const c=$('mapbox');const cw=c.clientWidth,ch=c.clientHeight;return Math.max(cw,Math.min(ch*800/382,cw*2.4))};
+const baseW=()=>{const c=$('mapbox');const cw=c.clientWidth,ch=c.clientHeight;return Math.max(cw,ch*800/382)};
 function fitMap(){const c=$('mapbox'),s=$('map');if(!c||!s||!c.clientWidth)return;c.classList.toggle('zoomed',ZM>1.01);s.style.minWidth='0';s.style.width=baseW()*ZM+'px';s.style.display='block'}
 function zoomMap(f,cx,cy){const c=$('mapbox'),s=$('map');if(!c||!s||!c.clientWidth)return;const old=s.getBoundingClientRect().width,b=baseW();
  ZM=f===0?1:Math.max(c.clientWidth/b,Math.min(4,ZM*f));s.style.minWidth='0';s.style.width=b*ZM+'px';s.style.display='block';c.classList.toggle('zoomed',ZM>1.01);
