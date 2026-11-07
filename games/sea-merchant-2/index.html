@@ -1771,7 +1771,8 @@ async function paintStrokes(src,w,h,brushes,opts){opts=opts||{};const out=docume
    c.strokeStyle=`rgba(${Math.max(0,Math.min(255,sd[k]+v))|0},${Math.max(0,Math.min(255,sd[k+1]+v*.8))|0},${Math.max(0,Math.min(255,sd[k+2]+v*.6))|0},${sd[k+3]>200?.95:sd[k+3]/255})`;c.beginPath();c.moveTo(x-dx,y-dy);c.lineTo(x+dx,y+dy);c.stroke()}}
  return out}
 const toBlob=(cv)=>new Promise(r=>cv.toBlob(r,'image/webp',.9));
-var NOBAKE=false;try{NOBAKE=/[?&#]nobake/.test(location.href)||(matchMedia('(hover:hover) and (pointer:fine)').matches&&!/Android/i.test(navigator.userAgent))}catch(e){}
+var NOBAKE=true;try{if(/[?&#]imgify/.test(location.href))NOBAKE=false;}catch(e){}
+try{if(/[?&#]nobake/.test(location.href))NOBAKE=true}catch(e){}
 var NOPAINT=!/[?&#]paint/.test(location.href);
 function bakePort(i){if(NOPAINT||NOBAKE||PIMG[i]||PIMG['p'+i])return PBAKE;PIMG['p'+i]=1;PBAKE=PBAKE.then(async()=>{try{
   await bkY(1);const g=paintPort(i);const W=1000,H=270;const doc='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 216" width="'+W+'" height="'+H+'"><defs>'+DABDEF+'</defs>'+g+'</svg>';
