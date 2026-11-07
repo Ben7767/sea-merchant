@@ -2473,6 +2473,13 @@ function chatSend(t){t=String(t||'').replace(/\s+/g,' ').trim().slice(0,60);if(!
  document.addEventListener('visibilitychange',()=>{if(!document.hidden){setTimeout(wake,50);setTimeout(wake,600)}});
  try{if(AU.ducks>0)setInterval(()=>{if(AU.ducks>0&&!(window.speechSynthesis&&speechSynthesis.speaking)){AU.ducks=0;applyVol()}},4000)}catch(e){}
  setInterval(()=>{try{if(AU.ducks>0&&!(window.speechSynthesis&&speechSynthesis.speaking)){AU.ducks=0;applyVol()}}catch(e){}},4000)}
+
+// ===== v2.5.2: audio self-test and reset in settings =====
+function audioInfo(){const c=AU.ctx;return c?`מצב: ${c.state} · ${c.sampleRate}Hz · מוזיקה ${AU.music?Math.round(AU.mv*100)+'%':'כבויה'} · אפקטים ${AU.sound?Math.round(AU.sv*100)+'%':'כבויים'}${AU.ducks>0?' · מושתק זמנית':''}`:'הקול עוד לא הופעל (גע במסך)'}
+function audioReset(){try{const o=AU.ctx;AU.started=false;clearInterval(AU.mt);AU.ctx=null;AU.bus={};AU.ducks=0;if(o){try{o.close()}catch(e){}}}catch(e){}
+ AU.music=true;AU.sound=true;if(AU.mv<.2)AU.mv=.55;if(AU.sv<.2)AU.sv=.9;saveAU();unlock();setTimeout(()=>{try{sfx('jingle');sfx('bell',.3)}catch(e){}const t=document.getElementById('auinfo');if(t)t.textContent=audioInfo();toast('🔄 הקול אותחל. '+audioInfo(),'info')},350)}
+function audioTest(){unlock();try{AU.ctx&&AU.ctx.resume()}catch(e){}setTimeout(()=>{try{sfx('jingle');sfx('cash',.4)}catch(e){}const t=document.getElementById('auinfo');if(t)t.textContent=audioInfo()},200)}
+{const _ac=audioCard;audioCard=function(){let h=_ac();const k=h.lastIndexOf('</div>');return h.slice(0,k)+`<div class="row" style="margin-top:8px;flex-wrap:wrap;gap:6px"><button class="a" onclick="audioTest()">🔊 בדיקת צליל</button><button class="a" onclick="audioReset()">🔄 אתחל קול</button></div><p id="auinfo" class="mut" style="margin:6px 0 0;font-size:12px">${audioInfo()}</p>`+h.slice(k)}}
 </script>
 </body>
 </html>
