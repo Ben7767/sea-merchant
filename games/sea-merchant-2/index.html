@@ -2274,6 +2274,37 @@ function extraCard(){const d=dailyGet();
 
 // ===== v1.6: new ports music aliases =====
 {const al=[8,5,7,4,5,15,13,13,2,6,13,13,2];al.forEach((b,i)=>{if(MM['port'+b])MM['port'+(16+i)]=MM['port'+b]})}
+
+// ===== v1.8: tech tree, trade fleet =====
+var TECH=[['yard','🏗️','מספנה','נזק לספינה −15%',1500,null],['gun','🔫','תותחים','+5% בקרב נגד שודדים',2000,'yard'],['drill','⚔️','אימונים','כוח חיילים +25%',1800,null],['trade','💰','מסחר','הכנסת צי +20%',1600,null],['guild','📜','גילדה','הכנסת צי +30% וספינה רביעית',2600,'trade'],['hosp','🏨','אירוח','הכנסת מלונות +15%',2200,null],['escort','🛡️','ליווי','ספינות הצי לא הולכות לאיבוד',2400,'gun']];
+function hasTech(k){return !!(S&&S.tech&&S.tech[k])}
+function buyTech(k){if(S.busy)return;const t=TECH.find(x=>x[0]===k);if(!t||hasTech(k))return;if(t[5]&&!hasTech(t[5])){toast('צריך קודם '+TECH.find(x=>x[0]===t[5])[2]+'.','bad');sfx('err');return}if(S.cash<t[4]){toast(`צריך ${fmt(t[4])}.`,'bad');sfx('err');return}S.cash-=t[4];(S.tech||(S.tech={}))[k]=1;sfx('upgrade');toast(`${t[1]} ${t[2]}: ${t[3]}`,'good');say(`למדת ${t[2]}: ${t[3]}.`,'good');hud();draw()}
+{const _g=gunWin;gunWin=function(){return _g()+(hasTech('gun')?.05:0)}}
+{const _h=hullHit;hullHit=function(n,why){return _h(hasTech('yard')?n*.85:n,why)}}
+{const _sp=solPow;solPow=function(){return _sp()*(hasTech('drill')?1.25:1)}}
+function fleetMax(){return hasTech('guild')?4:3}
+function fleetPrice(){return 2000+800*((S.fleet||[]).length)}
+function fleetNb(i){const o=[];ED.forEach((e,k)=>{if(e[0]===i)o.push([e[1],k]);else if(e[1]===i)o.push([e[0],k])});return o}
+function fleetDay(sh){const k=sh.k;return Math.round((45+RT[k].km/12)*(1+(hasTech('trade')?.2:0)+(hasTech('guild')?.3:0)))}
+async function buyShip(){if(S.busy)return;const f=S.fleet||(S.fleet=[]);if(f.length>=fleetMax()){toast('הצי מלא.','bad');return}const c=fleetPrice();if(S.cash<c){toast(`צריך ${fmt(c)}.`,'bad');sfx('err');return}
+ const nb=fleetNb(S.loc).slice(0,6);if(!nb.length){toast('אין מסלול מהנמל הזה.','bad');return}
+ const r=await choose('🚢 ספינת סוחר',`הספינה תפליג לסירוגין בין ${LOCS[S.loc]} ליעד שתבחר ותכניס כסף כל יום. מחיר ${fmt(c)}.`,nb.map(n=>[LOCS[n[0]],`~${RT[n[1]].km} ק״מ · ~${fleetDay({k:n[1]})} ליום`]).concat([[ '↩ לבטל','']]));if(r>=nb.length)return;
+ S.cash-=c;f.push({a:S.loc,b:nb[r][0],k:nb[r][1],t:S.day});sfx('jingle');toast(`🚢 ספינה חדשה: ${LOCS[S.loc]} ↔ ${LOCS[nb[r][0]]}`,'good');say(`קנית ספינת סוחר בקו ${LOCS[S.loc]}–${LOCS[nb[r][0]]}.`,'good');hud();draw()}
+function sellShip(i){if(S.busy)return;const f=S.fleet||[];if(!f[i])return;const v=Math.round((2000+800*i)*.5);f.splice(i,1);S.cash+=v;toast(`🚢 מכרת ספינה ב־${fmt(v)}.`,'info');hud();draw()}
+function fleetCard(){const f=S.fleet||[];
+ const tech=TECH.map(t=>hasTech(t[0])?`<span class="chip" title="${t[3]}">${t[1]} ${t[2]}</span>`:`<button class="s" style="padding:3px 7px" ${S.busy||S.cash<t[4]||(t[5]&&!hasTech(t[5]))?'disabled':''} onclick="buyTech('${t[0]}')" title="${t[3]}">${t[1]} ${t[2]}<br><small>${fmt(t[4])}</small></button>`).join(' ');
+ const ships=f.map((x,i)=>`<div class="row"><span style="font-size:12px">🚢 ${LOCS[x.a]} ↔ ${LOCS[x.b]} <span class="mut">· ~${fmt(fleetDay(x))} ליום</span></span><button class="s" style="padding:2px 7px" ${S.busy?'disabled':''} onclick="sellShip(${i})">מכור</button></div>`).join('');
+ return `<div class="card hcard" style="padding:6px 10px"><b>🚢 צי וטכנולוגיה</b>
+ ${ships||'<div class="mut" style="font-size:11px">אין עדיין ספינות. ספינה מרוויחה אוטומטית בין שני נמלים.</div>'}
+ <div class="row" style="margin-top:3px"><span class="mut" style="font-size:11px">ספינות ${f.length}/${fleetMax()}${f.length<fleetMax()?' · הקו מתחיל ב'+LOCS[S.loc]:''}</span><button class="a" style="padding:3px 8px" ${S.busy||f.length>=fleetMax()||S.cash<fleetPrice()?'disabled':''} onclick="buyShip()">🚢 ${fmt(fleetPrice())}</button></div>
+ <div class="mut" style="font-size:11px;margin:4px 0 2px">🔬 עץ טכנולוגיות</div><div style="display:flex;gap:5px;flex-wrap:wrap">${tech}</div></div>`}
+{const _pc=propCards;propCards=function(){return _pc()+fleetCard()}}
+{const _pa=propArrive;propArrive=async function(d0){const dd=S.iday==null?0:Math.max(0,Math.min(10,S.day-S.iday));await _pa(d0);if(S.over)return;
+ try{if(dd>0&&hasTech('hosp')){const m=ownMap(),me=myIdx();let t=0;Object.keys(m).forEach(k=>{const e=m[k];if(e&&e.o===me)t+=pInc(+k,e.r)});const x=Math.round(t*dd*.15);if(x>0){S.cash+=x;toast(`🏨 בונוס אירוח: +${fmt(x)}`,'good')}}
+ const f=S.fleet||[];if(f.length){let g=0,lost=0;for(let i=f.length-1;i>=0;i--){const sh=f[i],d=Math.max(0,Math.min(15,S.day-(sh.t==null?S.day:sh.t)));sh.t=S.day;if(d>0){g+=fleetDay(sh)*d;if(!hasTech('escort')&&Math.random()<.025*Math.min(d,5)/2){f.splice(i,1);lost++}}}
+  if(g>0){S.cash+=g;toast(`🚢 הכנסת הצי: +${fmt(g)}`,'good');say(`הצי הרוויח ${fmt(g)}.`,'good')}if(lost){toast(`🏴‍☠️ ${lost} ספינות הצי אבדו לשודדים!`,'bad');say(`${lost} ספינות הצי אבדו לשודדים.`,'bad')}}
+ hud();draw()}catch(e){console.error(e)}}}
+ACH.push(['f1','🚢','ספינת סוחר ראשונה',c=>(S.fleet||[]).length>=1],['tc3','🔬','3 טכנולוגיות',c=>Object.keys(S.tech||{}).length>=3]);
 </script>
 </body>
 </html>
