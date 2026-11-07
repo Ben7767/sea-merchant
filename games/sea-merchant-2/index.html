@@ -949,11 +949,12 @@ const slotInfo=sn=>sn?`${esc(sn.name)} · יום ${sn.S.day}/${DAYS} · ${LOCS[s
 function mainMenu(inGame){const au=ST.get('auto',null),nm=ST.get('name','');
  const o=ov(`<div class="mm" style="position:absolute;inset:0"></div><div class="mmw" style="position:absolute;left:0;right:0;top:36%;height:26px;opacity:.5;z-index:1;overflow:hidden;pointer-events:none"><svg viewBox="0 0 400 26" preserveAspectRatio="none" style="width:200%;height:100%;animation:mmw 9s linear infinite"><path d="M0 13q25-14 50 0t50 0t50 0t50 0t50 0t50 0t50 0t50 0t50 0t50 0t50 0t50 0t50 0t50 0t50 0t50 0t50 0" fill="none" stroke="#fff" stroke-width="3"/></svg></div>
  <div class="mmc"><div class="mmship"><svg viewBox="-80 -112 160 150" preserveAspectRatio="xMidYMid meet">${YS}</svg></div><h1>⚓ מסע הסוחרים 2</h1><p class="mmsub" style="margin-bottom:0;font-weight:700;letter-spacing:2px;opacity:.95" dir="ltr">Merchant Voyage</p><p class="mmsub">קנה נמלים · בנה מלונות · גבה שכירות</p>
- ${inGame?`<div class="nm">קפטן ${esc(S.name||'')} · יום ${S.day}/${DAYS}</div><button class="mb2 play" onclick="closeOv()">▶ חזרה למשחק</button>`:`<input id="nm" maxlength="14" placeholder="הקלד את שמך, קפטן" value="${esc(nm)}" autocomplete="off"><button class="mb2 play" onclick="startNew()">▶ משחק חדש</button>${au?`<button class="mb2 sec" onclick="continueGame()">⏩ המשך מהשמירה האחרונה<br><small style="font-weight:400">${slotInfo(au).replace(/<small>/,'<br>').replace(/<\/small>/,'')}</small></button>`:''}`}
+ ${inGame?`<div class="nm">קפטן ${esc(S.name||'')} · יום ${S.day}/${DAYS}${G2&&G2.on?'':' · '+DIFF[diffLv()][1]+' '+DIFF[diffLv()][0]}</div><button class="mb2 play" onclick="closeOv()">▶ חזרה למשחק</button>`:`<input id="nm" maxlength="14" placeholder="הקלד את שמך, קפטן" value="${esc(nm)}" autocomplete="off">${diffSel()}<button class="mb2 play" onclick="startNew()">▶ משחק חדש</button>${au?`<button class="mb2 sec" onclick="continueGame()">⏩ המשך מהשמירה האחרונה<br><small style="font-weight:400">${slotInfo(au).replace(/<small>/,'<br>').replace(/<\/small>/,'')}</small></button>`:''}`}
  ${inGame?`<div class="mrow"><button class="mb2" onclick="saveSlotUI()">💾 שמירה</button><button class="mb2" onclick="openSaves()">📂 טעינה</button></div><button class="mb2" onclick="exitGame()">🚪 יציאה</button>`:`<button class="mb2" onclick="openSaves()">💾 שמירה וטעינה</button>`}
  <div class="mrow"><button class="mb2" onclick="openScores()">🏆 שיאים</button><button class="mb2" onclick="openSettings()">⚙️ הגדרות</button></div>
  <div class="mrow"><button class="mb2" onclick="openHelp()">❓ איך משחקים</button>${inGame?'<button class="mb2" onclick="confirmNew()">🔄 משחק חדש</button>':'<button class="mb2" onclick="openAbout()">ℹ️ אודות</button>'}</div></div>`);
  o.style.background='none';const i=$('nm');if(i)i.addEventListener('keydown',e=>{if(e.key==='Enter')startNew()})}
+var DIFF=[['קל','🌊','ואסקו איטי, פחות שודדים, התחלה עם 3,000 ₪'],['רגיל','⚓','המשחק כפי שהיה'],['קשה','🔥','ואסקו אגרסיבי ומהיר, יותר שודדים, התחלה עם 1,500 ₪']];
 function startNew(){const i=$('nm'),name=((i&&i.value)||ST.get('name','')||'').trim().slice(0,14)||'סוחר';ST.set('name',name);closeOv();unlock();init();S.started=true;S.name=name;setMode('port'+S.loc);amb('port');
  say(`ברוך הבא, קפטן ${name}! שישה־עשר נמלים ממתינים לך.`);hud();tab('mk');toast(`⚓ ברוך הבא, קפטן ${esc(name)}! אלפיים מטבעות ו־30 ימים.`,'good');speak(`ברוך הבא, קפטן ${name}. ים התיכון מחכה לך.`,'joy');sfx('fanfare');draw()}
 function continueGame(){const sn=ST.get('auto',null);if(!sn)return;closeOv();unlock();applySnap(sn);toast(`⏩ המשחק נטען: יום ${S.day}, ${LOCS[S.loc]}`,'good');speak(`ברוך שובך, קפטן ${S.name}.`,'joy')}
@@ -2061,8 +2062,8 @@ async function aiTurn(){
    if(R0.cash>=pv){const c=await choose(`${A.e} ואסקו מציע עסקה`,`"אני רוצה את נמל ${LOCS[k]} עם המלון. אשלם ${fmt(pv)} מזומן."`,[[`💰 למכור ב־${fmt(pv)}`,'רווח עכשיו, אבל הוא יכנס לנמל שלך'],['🚫 לסרב',R0.pers==='aggr'?'הוא לא ישכח':'']]);
     if(c===0){e.o=1;S.cash+=pv;R0.cash-=pv;sfx('cash');toast(`💰 מכרת את ${LOCS[k]} לואסקו ב־${fmt(pv)}.`,'info');say(`מכרת את ${LOCS[k]} לואסקו.`);try{qmark();renderHotel(true)}catch(x){}}
     else if(R0.pers==='aggr'){R0.grudge=(R0.grudge||0)+1}}}}
- const n=aiCount();if(n>=AIWINN){aiWin();return}
- if(n>=6&&(R0.warn||0)<n){R0.warn=n;sfx('alarm');toast(`⚠️ ואסקו שולט ב־${n} נמלים! ב־${AIWINN} הוא משתלט על הים התיכון.`,'bad')}
+ const n=aiCount();if(n>=aiWinN()){aiWin();return}
+ if(n>=6&&(R0.warn||0)<n){R0.warn=n;sfx('alarm');toast(`⚠️ ואסקו שולט ב־${n} נמלים! ב־${aiWinN()} הוא משתלט על הים התיכון.`,'bad')}
  hud();draw()}
 function aiWin(){if(S.over)return;S.over=true;S.aiwin=1;S.bankrupt=1;S.busy=false;sfx('defeat');speak('ואסקו השתלט על המסחר בים התיכון.','sad');draw()}
 {const _pa=propArrive;propArrive=async function(d0){await _pa(d0);if(aiOn()&&!S.over){try{aiRent();await aiTurn()}catch(e){console.error(e)}}try{draw()}catch(e){}}}
@@ -2072,8 +2073,8 @@ function aiWin(){if(S.over)return;S.over=true;S.aiwin=1;S.bankrupt=1;S.busy=fals
   S.cash-=c;S.rival.cash+=c;e.o=0;e.pd=0;S.bo=(S.bo||0)+1;S.rival.grudge=(S.rival.grudge||0)+2;sfx('drum');sfx('cash',.4);toast(`💼 רכשת בכוח את ${LOCS[i]} מואסקו! הוא יכעס.`,'good');say(`רכשת את ${LOCS[i]} מואסקו ב־${fmt(c)}.`,'good');try{renderHotel(true);qmark()}catch(er){}hud();draw();return}return _pb()}}
 {const _pbuy=propBuy;propBuy=function(){const i=S.loc;_pbuy();if(aiOn()&&ownMap()[i]&&ownMap()[i].o===0&&setCount(1,PRG[i])>=2){S.rival.grudge=(S.rival.grudge||0)+1}}}
 {const _sc2=storyCard;storyCard=function(){const c=_sc2();if(!aiOn())return c;const R0=S.rival,A=AIP[R0.pers];
- const row=`<div style="margin-top:4px">${A.e} <b>ואסקו ${A.n}</b> <span class="mut">· ${A.d} · נמלים: ${aiCount()}/${AIWINN}</span></div>`;return c.replace(/<\/div>\s*$/,row+'</div>')}}
-{const _pc2=propCards;propCards=function(){let h=_pc2();if(aiOn()){const R0=S.rival,A=AIP[R0.pers],n=aiCount();h=`<div class="card" style="padding:6px 10px;border-color:#2a7fd9"><b>${A.e} ואסקו ${A.n}</b> <span class="mut" style="font-size:11px">· ${A.d}</span><div class="mut" style="font-size:12px">נמלים: ${n}/${AIWINN} (ב־${AIWINN} הוא משתלט ואתה מפסיד) · הון: ${fmt(rivalWealth())}${(R0.grudge||0)>0?' · 😠 כועס עליך':''}</div></div>`+h}return h}}
+ const row=`<div style="margin-top:4px">${A.e} <b>ואסקו ${A.n}</b> <span class="mut">· ${A.d} · נמלים: ${aiCount()}/${aiWinN()}</span></div>`;return c.replace(/<\/div>\s*$/,row+'</div>')}}
+{const _pc2=propCards;propCards=function(){let h=_pc2();if(aiOn()){const R0=S.rival,A=AIP[R0.pers],n=aiCount();h=`<div class="card" style="padding:6px 10px;border-color:#2a7fd9"><b>${A.e} ואסקו ${A.n}</b> <span class="mut" style="font-size:11px">· ${A.d}</span><div class="mut" style="font-size:12px">נמלים: ${n}/${aiWinN()} (ב־${aiWinN()} הוא משתלט ואתה מפסיד) · הון: ${fmt(rivalWealth())}${(R0.grudge||0)>0?' · 😠 כועס עליך':''}</div></div>`+h}return h}}
 {const _se=storyEnd;storyEnd=function(){if(S.aiwin)return `<p><b>🧔 ואסקו משתלט על הים</b></p><p class="mut">${fmt(aiCount())} נמלים בידיו. בפעם הבאה קנה נמלים מוקדם או רכוש בכוח את נמליו.</p>`+metaHtml();
  const c=_se();return c+metaHtml()}}
 {const _ev=evRival;evRival=async function(d){const r=await _ev(d);return r}}
@@ -2437,6 +2438,17 @@ function svcCard(){const L=S.loan|0,mx=loanMax();
  <div class="row"><span style="font-size:12px">🛡️ <b>ביטוח מטען</b><br><span class="mut" style="font-size:10.5px">${S.ins?'✔ פעיל, יכסה 80% מהאובדן הבא':'מכסה 80% מהאובדן הבא של מטען'}</span></span><button class="s" ${S.busy||S.ins||S.cash<300?'disabled':''} onclick="buyIns()">🛡️<br><small>${fmt(300)}</small></button></div>
  <div class="row"><span style="font-size:12px">🏦 <b>הלוואה</b> <span class="mut" style="font-size:10.5px">ריבית 1% ליום · החוב יורד מההון בסוף</span><br><span style="font-size:11.5px">${L?`חוב: <b style="color:#b3261e">${fmt(L)}</b>`:'אין חוב'} <span class="mut">· עוד עד ${fmt(mx)}</span></span></span><span style="display:flex;gap:4px"><button class="s" style="padding:3px 7px" ${S.busy||mx<500?'disabled':''} onclick="takeLoan(Math.min(1000,loanMax()))">קח<br><small>${fmt(Math.min(1000,mx))}</small></button><button class="s" style="padding:3px 7px" ${S.busy||!L||S.cash<1?'disabled':''} onclick="repayLoan()">החזר<br><small>${fmt(Math.min(L,S.cash))}</small></button></span></div></div>`}
 {const _y=yard;yard=function(){return _y()+svcCard()+whCard()}}
+
+// ===== v2.4: difficulty levels (solo) =====
+function diffLv(){let d=(S&&S.diff!=null)?S.diff:null;if(d==null){try{d=ST.get('diff',1)}catch(e){d=1}}return Math.max(0,Math.min(2,d|0))}
+function aiWinN(){return [11,9,8][diffLv()]}
+function setDiff(k){try{ST.set('diff',k)}catch(e){}document.querySelectorAll('#dfsel button').forEach((b,i)=>b.classList.toggle('sel',i===k));const t=document.getElementById('dfinfo');if(t)t.textContent=DIFF[k][2]}
+function diffSel(){const d=diffLv();return `<div id="dfsel" style="display:flex;gap:6px;margin:6px 0 2px">${DIFF.map((x,i)=>`<button type="button" class="mb2${i===d?' sel':''}" style="flex:1;padding:8px 4px;margin:0;${i===d?'outline:3px solid #ffd23f':''}" onclick="setDiff(${i});this.parentNode.querySelectorAll('button').forEach((b,j)=>b.style.outline=j===${i}?'3px solid #ffd23f':'none')">${x[1]} ${x[0]}</button>`).join('')}</div><div id="dfinfo" class="mut" style="font-size:12px;text-align:center;margin-bottom:6px">${DIFF[d][2]}</div>`}
+{const _sn=startNew;startNew=function(){_sn.apply(this,arguments);try{if(S&&S.started&&!(G2&&G2.on)&&S.diff==null){const d=diffLv();S.diff=d;S.cash+=[1000,0,-500][d];hud()}}catch(e){console.error(e)}}}
+{const _g=gunDet;gunDet=function(){return _g()*(G2&&G2.on?1:[.8,1,1.2][diffLv()])}}
+var AIBASE=JSON.parse(JSON.stringify(AIPAR));
+{const _at=aiTurn;aiTurn=async function(){try{if(aiOn()){const d=diffLv(),R0=S.rival;Object.keys(AIBASE).forEach(k=>{const b=AIBASE[k],t=AIPAR[k];t.acts=d===0?Math.max(1,b.acts-1):d===2?b.acts+1:b.acts;t.mult=b.mult*[1.25,1,.85][d];t.res=b.res*[1.3,1,.7][d];t.steal=Math.min(.5,b.steal*[.5,1,1.4][d]);t.off=Math.min(.6,b.off*[.5,1,1.3][d])});
+  const dd=Math.max(0,S.day-(R0.aiLast||S.day));R0.cash=Math.max(0,R0.cash+dd*[-60,0,140][d])}}catch(e){console.error(e)}return _at.apply(this,arguments)}}
 </script>
 </body>
 </html>
