@@ -2395,6 +2395,12 @@ function boatF(){return 1-.25*upLv('boat')}
    const tx=el.querySelector('.rvt');if(tx)tx.textContent=(o.name||'')+(o.pg?' ⛵':'')})}else{const g=document.getElementById('rvmap');if(g&&g._k){g._k='';g.innerHTML=''}}}catch(er){}
   requestAnimationFrame(rvLoop)}
  requestAnimationFrame(rvLoop)}
+
+// ===== v2.2.3: online - ownership changes show immediately =====
+function ownSig(){try{const m=ownMap();return Object.keys(m).map(k=>{const e=m[k];return e?k+':'+e.o+'.'+e.r+'.'+(e.m?1:0)+'.'+(e.g|0)+'.'+(e.br|0):''}).join('|')}catch(e){return''}}
+{const _nt=netTick;netTick=function(){const a=(G2&&G2.net)?ownSig():'';_nt.apply(this,arguments);try{if(G2&&G2.net&&G2.on&&ownSig()!==a){renderHotel(false);qmark();mapUpdate();hud();if(!S.busy)draw()}}catch(e){console.error(e)}}}
+{const _pb=propBuy;propBuy=function(){const r=_pb.apply(this,arguments);try{if(G2&&G2.net)netPush()}catch(e){}return r}}
+{const _pd=propBuild;propBuild=function(){const r=_pd.apply(this,arguments);try{if(G2&&G2.net)netPush()}catch(e){}return r}}
 </script>
 </body>
 </html>
