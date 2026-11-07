@@ -1769,7 +1769,8 @@ async function paintStrokes(src,w,h,brushes,opts){opts=opts||{};const out=docume
    c.strokeStyle=`rgba(${Math.max(0,Math.min(255,sd[k]+v))|0},${Math.max(0,Math.min(255,sd[k+1]+v*.8))|0},${Math.max(0,Math.min(255,sd[k+2]+v*.6))|0},${sd[k+3]>200?.95:sd[k+3]/255})`;c.beginPath();c.moveTo(x-dx,y-dy);c.lineTo(x+dx,y+dy);c.stroke()}}
  return out}
 const toBlob=(cv)=>new Promise(r=>cv.toBlob(r,'image/webp',.9));
-function bakePort(i){if(PIMG[i]||PIMG['p'+i])return PBAKE;PIMG['p'+i]=1;PBAKE=PBAKE.then(async()=>{try{
+var NOBAKE=false;try{NOBAKE=/[?&#]nobake/.test(location.href)||(matchMedia('(hover:hover) and (pointer:fine)').matches&&!/Android/i.test(navigator.userAgent))}catch(e){}
+function bakePort(i){if(NOBAKE||PIMG[i]||PIMG['p'+i])return PBAKE;PIMG['p'+i]=1;PBAKE=PBAKE.then(async()=>{try{
   await bkY(1);const g=paintPort(i);const W=1000,H=270;const doc='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 216" width="'+W+'" height="'+H+'"><defs>'+DABDEF+'</defs>'+g+'</svg>';
   const im=new Image();await new Promise((res,rej)=>{im.onload=res;im.onerror=rej;im.src='data:image/svg+xml;base64,'+btoa(unescape(encodeURIComponent(doc)))});
   const cs=document.createElement('canvas');cs.width=W;cs.height=H;cs.getContext('2d').drawImage(im,0,0,W,H);
@@ -1894,7 +1895,7 @@ paintPort=function(i){const C=CFG[i%16],P=PALS[C.pal],R=netMul(4000+i*131),rnd=(
  s+=`<rect width="800" height="216" fill="url(#dab)" opacity=".13"/>`;
  for(let k=0;k<10;k++)refl+=`<rect x="${f1(rnd(0,760))}" y="${f1(rnd(216,262))}" width="${f1(rnd(30,90))}" height="1.2" fill="#fff0c8" opacity=".25"/>`;
  PORT_REFL[i]=refl;return s};
-for(let i=0;i<PORTS.length;i++){PORTS[i]=imgify(paintPort(i));PIMG[i]=undefined;PIMG['p'+i]=undefined}
+for(let i=0;i<PORTS.length;i++){PORTS[i]=NOBAKE?paintPort(i):imgify(paintPort(i));PIMG[i]=undefined;PIMG['p'+i]=undefined}
 
 // island marker on the map once the torn map is complete
 {const _q=qmark;qmark=function(){_q();try{const e=$('qs');if(!e||!S||!S.map||S.map.done||S.map.got.length<3)return;
