@@ -143,7 +143,7 @@ body{font-size:clamp(15px,1.5vmin + 9px,19px)}
 .mm{background:linear-gradient(#5db6ec 0%,#bfe6f7 38%,#1b86b4 39%,#0a3f66 100%);overflow:hidden;color:#fff}
 .mm .mmw{position:absolute;left:0;right:0;top:36%;height:26px;opacity:.5}
 .mm .mmw svg{width:200%;height:100%;animation:mmw 9s linear infinite}@keyframes mmw{to{transform:translateX(-50%)}}
-.mmc{color:#fff;position:relative;z-index:2;width:min(92vw,400px);max-height:100%;overflow-y:auto;overflow-x:hidden;padding:14px 4px;text-align:center;display:flex;flex-direction:column;gap:9px;align-items:stretch}
+.mmc{box-sizing:border-box;color:#fff;position:relative;z-index:2;width:min(92vw,400px);max-height:100%;overflow-y:auto;overflow-x:hidden;padding:14px 4px;text-align:center;display:flex;flex-direction:column;gap:9px;align-items:stretch}
 .mmship{height:clamp(80px,17dvh,140px);flex:0 0 auto;overflow:hidden}.mmship svg{height:100%;width:100%;display:block;animation:pvb 3s ease-in-out infinite}
 .mmc h1{margin:0;font-size:clamp(38px,11vw,58px);text-shadow:0 4px 14px rgba(0,40,70,.65);letter-spacing:1px}
 .mmc .mmsub{margin:-4px 0 4px;opacity:.9;text-shadow:0 2px 8px rgba(0,40,70,.7)}
@@ -204,6 +204,8 @@ body{font-size:clamp(15px,1.5vmin + 9px,19px)}
 .ml-w3{animation:mlw3 6.5s ease-in-out infinite alternate}@keyframes mlw3{from{transform:translate(-9px,0)}to{transform:translate(9px,-5px)}}
 .ml-gul{animation:mlg 55s linear infinite}@keyframes mlg{from{transform:translateX(-12%)}to{transform:translateX(112%)}}
 .mmc{height:100%;max-height:100%;justify-content:center!important;gap:clamp(14px,3.4dvh,30px)!important;padding:max(14px,2dvh) 6px!important}
+.mmc{justify-content:flex-start!important}.mmc>:first-child{margin-top:auto}.mmc>:last-child{margin-bottom:auto}
+@media (max-height:760px) and (max-width:699px){.mmc{gap:6px!important;padding-top:6px!important}.mmc .mmship{height:64px}.mmc .mmbot{gap:6px}.mmc .mb2{padding:9px 8px;font-size:15px}.mmc .mb2.play{font-size:20px;padding:11px}.mmc input{padding:8px}}
 .mmtop{display:flex;flex-direction:column;gap:6px;align-items:center}.mmbot{display:flex;flex-direction:column;gap:9px}
 .mmtag{min-height:26px;font-size:clamp(15px,4.2vw,20px);font-weight:600;color:#fff4d6;text-shadow:0 2px 10px rgba(40,0,40,.8);transition:opacity .8s;opacity:0}.mmtag.on{opacity:1}
 .mmc h1{text-shadow:0 3px 18px rgba(60,10,60,.85),0 0 40px rgba(255,170,90,.55)!important}
@@ -2443,7 +2445,7 @@ function svcCard(){const L=S.loan|0,mx=loanMax();
 function diffLv(){let d=(S&&S.diff!=null)?S.diff:null;if(d==null){try{d=ST.get('diff',1)}catch(e){d=1}}return Math.max(0,Math.min(2,d|0))}
 function aiWinN(){return [11,9,8][diffLv()]}
 function setDiff(k){try{ST.set('diff',k)}catch(e){}document.querySelectorAll('#dfsel button').forEach((b,i)=>b.classList.toggle('sel',i===k));const t=document.getElementById('dfinfo');if(t)t.textContent=DIFF[k][2]}
-function diffSel(){const d=diffLv();return `<div id="dfsel" style="display:flex;gap:6px;margin:6px 0 2px">${DIFF.map((x,i)=>`<button type="button" class="mb2${i===d?' sel':''}" style="flex:1;padding:8px 4px;margin:0;${i===d?'outline:3px solid #ffd23f':''}" onclick="setDiff(${i});this.parentNode.querySelectorAll('button').forEach((b,j)=>b.style.outline=j===${i}?'3px solid #ffd23f':'none')">${x[1]} ${x[0]}</button>`).join('')}</div><div id="dfinfo" class="mut" style="font-size:12px;text-align:center;margin-bottom:6px">${DIFF[d][2]}</div>`}
+function diffSel(){const d=diffLv();return `<div id="dfsel" style="display:flex;gap:6px;margin:0">${DIFF.map((x,i)=>`<button type="button" class="mb2${i===d?' sel':''}" style="flex:1;padding:6px 4px;font-size:15px;margin:0;${i===d?'outline:3px solid #ffd23f':''}" onclick="setDiff(${i});this.parentNode.querySelectorAll('button').forEach((b,j)=>b.style.outline=j===${i}?'3px solid #ffd23f':'none')">${x[1]} ${x[0]}</button>`).join('')}</div><div id="dfinfo" class="mut" style="font-size:11px;text-align:center;margin:0 0 2px;color:#fff;opacity:.85;text-shadow:0 1px 4px #000">${DIFF[d][2]}</div>`}
 {const _sn=startNew;startNew=function(){_sn.apply(this,arguments);try{if(S&&S.started&&!(G2&&G2.on)&&S.diff==null){const d=diffLv();S.diff=d;S.cash+=[1000,0,-500][d];hud()}}catch(e){console.error(e)}}}
 {const _g=gunDet;gunDet=function(){return _g()*(G2&&G2.on?1:[.8,1,1.2][diffLv()])}}
 var AIBASE=JSON.parse(JSON.stringify(AIPAR));
