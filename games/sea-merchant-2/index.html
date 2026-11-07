@@ -419,7 +419,7 @@ function choose(title,txt,opts){return new Promise(res=>{sfx('pop');const d=docu
 function coins(x,y,n=10){sfx('coins');$('fx').insertAdjacentHTML('beforeend',Array.from({length:n},(_,i)=>`<circle class="coin" cx="${x}" cy="${y}" r="6" style="--dx:${R(-70,70)}px;animation-delay:${i*.07}s"/>`).join(''))}
 async function banner(t,ms){sfx('whoosh');const b=$('ban');b.textContent=t;b.className='ban';b.getBoundingClientRect();b.className='ban show';await sleep(ms)}
 function put(x,a){const s=$('ship');s.style.transition=a?'transform 1.3s ease-in-out':'none';s.style.transform=`translate(${x}px,240px)`}
-const lose=f=>{GOODS.forEach(g=>S.cargo[g.k]-=Math.floor(S.cargo[g.k]*f));scene()};
+const lose=f=>{f*=(typeof boatF==='function'?boatF():1);GOODS.forEach(g=>S.cargo[g.k]-=Math.floor(S.cargo[g.k]*f));scene()};
 // trading
 function trade(i,m){if(S.busy)return;const g=GOODS[i],p=S.prices[i];let q=Math.max(0,Math.floor(+S.qty)||0);
  if(m==='b'){q=Math.min(q,Math.floor(S.cash/p),CAP-load());if(q<=0)say('אי אפשר לקנות: חסר כסף או מקום בספינה.','bad');else{S.cash-=q*p;S.cargo[g.k]+=q;say(`קנית ${q} טון ${g.n} ב־${fmt(q*p)}.`)}}
@@ -581,7 +581,7 @@ function askGuards(ei,dest){const e=ED[ei],gc=guardCost(),mxn=Math.min(12,Math.f
  upd();document.body.appendChild(d);speak('כמה ספינות משמר לשכור?')})}
 function yard(){const L=SHIPS[S.lv],N=SHIPS[S.lv+1];return`<div class="card"><div class="row"><span><b>⚓ המספנה</b><br><span class="mut">הספינה שלך: ${L[0]} · קיבולת ${CAP} טון</span></span>${N?`<button class="s" ${S.busy?'disabled':''} onclick="upgrade()">🔨 שדרג ל${N[0]}<br><small>${N[1]} טון · ${fmt(N[2])}</small></button>`:'<span class="good">🏆 ספינת הדגל!</span>'}</div></div>`}
 async function upgrade(){if(S.busy)return;const N=SHIPS[S.lv+1];if(!N)return;if(S.cash<N[2]){say(`צריך ${fmt(N[2])} כדי לשדרג.`,'bad');return draw()}
- S.busy=true;S.cash-=N[2];S.lv++;CAP=N[1];sfx('upgrade');say(`שדרגת לספינת ${N[0]}! הקיבולת עכשיו ${CAP} טון.`,'good');window.scrollTo({top:0,behavior:'smooth'});draw();
+ S.busy=true;S.cash-=N[2];S.lv++;CAP=N[1]+holdB();sfx('upgrade');say(`שדרגת לספינת ${N[0]}! הקיבולת עכשיו ${CAP} טון.`,'good');window.scrollTo({top:0,behavior:'smooth'});draw();
  speak(`הספינה שודרגה! עכשיו אפשר להעמיס ${CAP} טון.`,'joy');scene();coins(400,215,14);await banner('הספינה שודרגה!',1500);S.busy=false;draw()}
 // music (synthesized, no files)
 // storm cutscene
@@ -1277,7 +1277,7 @@ function open2P(){const v=k=>esc(ST.get('p'+k,'')||'');const inp=k=>`<input id="
  ov(`<div class="mcard" style="text-align:center"><h2>👥 כמה שחקנים על מכשיר אחד <button class="sm" onclick="backMenu()">✕</button></h2><p class="mut" style="font-size:14px">תור אחרי תור על אותו מכשיר: כל קפטן מפליג הפלגה, ואז מעבירים. 30 ימים לכל אחד, ומנצח מי שהונו גדול ביותר.</p><div class="mrow" style="margin:4px 0"><button id="pc2" class="mb2" onclick="p2set(2)">2</button><button id="pc3" class="mb2" onclick="p2set(3)">3</button><button id="pc4" class="mb2" onclick="p2set(4)">4</button></div>${inp(1)}${inp(2)}${inp(3)}${inp(4)}<button class="mb2 play" style="width:100%;margin-top:8px" onclick="start2P()">▶ התחילו</button></div>`,'dim');p2set(P2N)}
 function start2P(){const names=[];for(let k=1;k<=P2N;k++){const n=((($('n'+k)||{}).value||'').trim().slice(0,14))||('קפטן '+k);names.push(n);ST.set('p'+k,n)}closeOv();unlock();G2=null;
  init();S.started=true;S.name=names[0];ensureX();S.rival.loc=-1;const a=S,P=[a];for(let k=1;k<names.length;k++){const b=JSON.parse(JSON.stringify(a));b.name=names[k];P.push(b)}
- G2={on:true,cur:0,p:P,imp:{},own:{},tw:null};S=a;CAP=SHIPS[S.lv][1];try{face(1)}catch(e){}PREV=null;closeSheet();scene();setMode('port'+S.loc);amb('port');mapUpdate();qmark();hud();tab('mk');draw();
+ G2={on:true,cur:0,p:P,imp:{},own:{},tw:null};S=a;CAP=SHIPS[S.lv][1]+holdB();try{face(1)}catch(e){}PREV=null;closeSheet();scene();setMode('port'+S.loc);amb('port');mapUpdate();qmark();hud();tab('mk');draw();
  say(`תור של ${names[0]}. בהצלחה!`);toast(`👥 ${names.map(esc).join(' · ')}. תור ראשון: ${esc(names[0])}`,'good');speak(`${names.join(' ו')}, שיהיה בהצלחה. התור הראשון של ${names[0]}.`,'joy');sfx('fanfare')}
 {const _sn=startNew;startNew=function(){G2=null;_sn()}}
 {const _a=applySnap;applySnap=function(sn){if(sn&&sn.g2){const g=sn.g2;G2={on:true,cur:g.cur,own:g.own||{},taken:g.taken||{},imp:g.imp||{},burn:g.burn||{},tw:g.tw==null?null:g.tw,p:g.p.map(x=>Object.assign({},x,{busy:false,trip:null,started:true}))};_a(Object.assign({},sn,{S:G2.p[G2.cur]}));G2.p[G2.cur]=S}else{G2=null;_a(sn)}}}
@@ -1310,7 +1310,7 @@ async function g2EndTurn(){if(G2.ending)return;G2.ending=1;try{while(S.dying)awa
  let nx=-1;for(let k=1;k<n;k++){const j=(me+k)%n;if(!G2.p[j].over){nx=j;break}}
  if(nx<0){if(S.over)return g2Final();return}
  await g2Handover(nx)}finally{G2.ending=0}}
-function g2Handover(next){return new Promise(res=>{const prev=G2.p[G2.cur];G2.cur=next;S=G2.p[next];CAP=SHIPS[S.lv][1];S.busy=false;S.trip=null;try{face(1)}catch(e){}PREV=null;closeSheet();scene();setMode('port'+S.loc);amb('port');mapUpdate();qmark();hud();tab('mk');draw();
+function g2Handover(next){return new Promise(res=>{const prev=G2.p[G2.cur];G2.cur=next;S=G2.p[next];CAP=SHIPS[S.lv][1]+holdB();S.busy=false;S.trip=null;try{face(1)}catch(e){}PREV=null;closeSheet();scene();setMode('port'+S.loc);amb('port');mapUpdate();qmark();hud();tab('mk');draw();
  try{ST.set('auto',snap())}catch(e){}
  const msg=prev.over?`${esc(prev.name)} סיים את המסע ${prev.sunk?'(הספינה טבעה)':prev.bankrupt?'(פשט רגל)':''}.`:`${esc(prev.name)} הפליג והגיע ל${LOCS[prev.loc]} (יום ${prev.day}/${DAYS}).`;
  const o=ov(`<div class="mcard" style="text-align:center"><h2>🔄 תור של ${esc(S.name)}</h2><p>${msg}</p>${pNewsHTML()}<p class="mut">העבירו את המכשיר ל־<b>${esc(S.name)}</b>.<br>אתה ב${LOCS[S.loc]} · יום ${S.day}/${DAYS} · הון ${fmt(wealth())}${S.sabo?'<br>⚠️ שכרו נגדך שודדים: ההפלגה הבאה מסוכנת!':''}</p><button class="mb2 play" id="g2go" style="width:100%">▶ אני מוכן</button></div>`,'dim');
@@ -1648,7 +1648,7 @@ function netJoinUI(){const c=((($('ncode')||{}).value)||'').trim().toLowerCase()
 function netBegin(start,me){NET.started=true;NET.seed=start.seed;closeOv();unlock();const orig=Math.random;Math.random=netMul(start.seed);G2=null;try{init()}finally{Math.random=orig}
  S.started=true;S.name=NET.name;ensureX();S.rival.loc=-1;const p=[];start.order.forEach((id,i)=>{if(i===me)p.push(null);else p.push({net:1,name:start.names[i]||'קפטן',lv:0,loc:S.loc,to:-1,day:1,over:false,cash:2000,bank:0,rw:2000,cargo:{},prices:[],rentIn:0,ct:{done:0},seen:{}})});
  Object.defineProperty(p,me,{get:()=>S,set:()=>{},enumerable:true,configurable:true});
- G2={on:true,net:true,cur:me,p,pid:start.order.slice(),imp:{},own:{},taken:{},burn:{},tw:null,ev:[],seq:0,to:-1};CAP=SHIPS[S.lv][1];try{face(1)}catch(e){}PREV=null;closeSheet();scene();setMode('port'+S.loc);amb('port');mapUpdate();qmark();hud();tab('mk');draw();
+ G2={on:true,net:true,cur:me,p,pid:start.order.slice(),imp:{},own:{},taken:{},burn:{},tw:null,ev:[],seq:0,to:-1};CAP=SHIPS[S.lv][1]+holdB();try{face(1)}catch(e){}PREV=null;closeSheet();scene();setMode('port'+S.loc);amb('port');mapUpdate();qmark();hud();tab('mk');draw();
  NET.last=null;NET.seen={};NET.tk=0;NET.iv=setInterval(netTick,400);const names=start.names.join(' · ');say(`המשחק מתחיל: ${names}. בהצלחה!`);toast(`🌐 ${esc(names)}. מפליגים באותו זמן!`,'good');speak(`המשחק מתחיל. בהצלחה לכולם.`,'joy');sfx('fanfare');netPush()}
 function netStop(){try{if(NET){clearInterval(NET.iv);clearInterval(NET.wait);if(NET.room)NET.room.leave(NET.host)}}catch(e){}NET=null;if(G2&&G2.net)G2=null}
 {const _ss=ST.set;ST.set=function(k,v){if(k==='auto'&&G2&&G2.net)return;return _ss.apply(ST,arguments)}}
@@ -2327,7 +2327,7 @@ async function techTap(k){const t=TECH.find(x=>x[0]===k);if(!t)return;if(hasTech
  const c=await choose(`${t[1]} ${t[2]}`,`${t[3]}. מחיר ${fmt(t[4])}.`,[['🔬 ללמוד',fmt(t[4])],['↩ לבטל','']]);if(c===0)buyTech(k)}
 {const _fc=fleetCard;fleetCard=function(){let h=_fc();const a=h.indexOf('<div class="mut" style="font-size:11px;margin:4px 0 2px">🔬');if(a<0)return h;return h.slice(0,a)+'<div class="mut" style="font-size:11px;margin:4px 0 2px">🔬 עץ טכנולוגיות</div>'+techTree()+'</div>'}}
 // 3) ship look by technology
-function techSig(){return TECH.map(t=>hasTech(t[0])?1:0).join('')+'|'+upLv('sail')+upLv('arm')+upLv('nav')}
+function techSig(){return TECH.map(t=>hasTech(t[0])?1:0).join('')+'|'+SUPG.map(u=>upLv(u[0])).join('')}
 {const _s=ship;ship=function(lv,P){let r=_s(lv,P);if(P!==PL||!S||!S.tech)return r;lv=Math.max(0,Math.min(3,lv|0));const hw=[54,64,76,88][lv],d=[22,25,29,33][lv],H=[96,108,122,136][lv],mx=lv==0?0:lv==1?hw*.3:0,tb=lv>=1?-21:-19;let x='';
   if(hasTech('yard'))x+=`<path d="M${-hw+8} ${d-2}C${-hw*.55} ${d+2} ${hw*.3} ${d+4} ${hw-10} ${d+1}" stroke="#b8734a" stroke-width="3.2" fill="none" stroke-linecap="round"/><path d="M${-hw+8} ${d-3.2}C${-hw*.55} ${d+.8} ${hw*.3} ${d+2.8} ${hw-10} ${d-.2}" stroke="#e8a27a" stroke-width=".8" fill="none" opacity=".7"/>`;
   if(hasTech('gun'))x+=`<path d="M${hw+10} ${tb-6}L${hw+36} ${tb-12}" stroke="#25252a" stroke-width="5" stroke-linecap="round"/><circle cx="${hw+10}" cy="${tb-6}" r="4.2" fill="#a97a35" stroke="#25252a"/><rect x="${hw+30}" y="${tb-15}" width="4" height="7" rx="1" fill="#a97a35" transform="rotate(-14 ${hw+32} ${tb-12})"/>`;
@@ -2358,6 +2358,24 @@ function upgCard(){return `<div class="card" style="padding:6px 10px"><b>🔧 ש
   if(nv>=1)x+=`<path d="M${mx-10} ${-H*.7}h20l-3 8h-14Z" fill="#5a3a1e" stroke="#2a1a0c" stroke-width=".8"/>`;
   if(nv>=2)x+=`<g transform="translate(${hw+4},${tb-14})"><path d="M0 0V-9" stroke="#4a3220" stroke-width="2"/><rect x="-3" y="-17" width="6" height="8" rx="1.5" fill="#ffd96a" stroke="#4a3220"/></g>`;
   if(nv>=3)x+=`<circle cx="${mx}" cy="${-H-2}" r="4.2" fill="#f4c542" stroke="#8a6a10"/><path d="M${mx-6} ${-H-2}h12M${mx} ${-H-8}v12" stroke="#8a6a10" stroke-width=".8"/>`;
+  return r+x}}
+
+// ===== v2.1: more ship upgrades =====
+SUPG.push(['hold','📦','מחסן מורחב','+60 טון קיבולת לכל דרגה',[2500,6500,13000]],['ram','🐏','איל ניגוח','+8% בקרב נגד שודדים לכל דרגה',[3000,7000,14000]],['boat','🛟','סירות הצלה','פחות מטען אובד בהפסד: 25% לכל דרגה',[2000,5000,10000]],['fix','🔩','תיקון עצמי','הספינה מתקנת 3% נזק לכל דרגה בכל הגעה',[2200,5500,11000]]);
+function holdB(){return 60*upLv('hold')}
+function boatF(){return 1-.25*upLv('boat')}
+{const _g=gunWin;gunWin=function(){return _g()+.08*upLv('ram')}}
+{const _by=buyUp;buyUp=function(k){const l=upLv(k);_by(k);if(k==='hold'&&upLv(k)>l){CAP=SHIPS[S.lv][1]+holdB();toast(`📦 הקיבולת עכשיו ${CAP} טון.`,'info');hud();draw()}}}
+{const _pa=propArrive;propArrive=async function(d0){await _pa(d0);if(S.over)return;try{const f=upLv('fix');if(f&&S.hull!=null&&S.hull<100){S.hull=Math.min(100,S.hull+3*f);hud()}}catch(e){}}}
+{const _s=ship;ship=function(lv,P){let r=_s(lv,P);if(P!==PL||!S||!S.up)return r;lv=Math.max(0,Math.min(3,lv|0));const hw=[54,64,76,88][lv],d=[22,25,29,33][lv],tb=lv>=1?-21:-19,ts=lv>=2?-35:-25,h=upLv('hold'),rm=upLv('ram'),bt=upLv('boat'),fx=upLv('fix');let x='';
+  for(let k=0;k<h;k++){x+=`<rect x="${-hw*.5+k*13}" y="${tb-12-(k%2)*3}" width="11" height="10" rx="1.2" fill="${['#b98a4a','#9a6e38','#c79a55'][k]}" stroke="#4a3220"/><path d="M${-hw*.5+k*13} ${tb-7-(k%2)*3}h11" stroke="#4a3220" stroke-width=".8"/>`}
+  if(rm>=1)x+=`<path d="M${hw+20} ${d-9}L${hw+34+rm*3} ${d-5}L${hw+18} ${d-1}Z" fill="#5d636c" stroke="#25282d" stroke-width="1"/>`;
+  if(rm>=3)x+=`<path d="M${hw+24} ${d-8}l7 3-7 2Z" fill="#c8ced6"/>`;
+  if(bt>=1)x+=`<g transform="translate(${-hw*.1},${tb+1})"><path d="M-12 0Q0 9 12 0Z" fill="#c9892b" stroke="#4a3220" stroke-width="1"/><path d="M-9 -1H9" stroke="#f4ead0" stroke-width="1.6"/></g>`;
+  if(bt>=2)x+=`<circle cx="${hw*.35}" cy="${tb+10}" r="4.4" fill="none" stroke="#e8e2d2" stroke-width="2.4"/><path d="M${hw*.35-4} ${tb+10}h8M${hw*.35} ${tb+6}v8" stroke="#c0392b" stroke-width="1.2"/>`;
+  if(bt>=3)x+=`<g transform="translate(${-hw+22},${tb+1})"><path d="M-9 0Q0 7 9 0Z" fill="#c9892b" stroke="#4a3220" stroke-width="1"/></g>`;
+  if(fx>=1)x+=`<g transform="translate(${hw*.15},${tb-12})"><rect x="-6" y="0" width="12" height="8" rx="1.5" fill="#35684a" stroke="#143222"/><path d="M0 2V6M-2 4H2" stroke="#e8f6e8" stroke-width="1.4"/></g>`;
+  if(fx>=3)x+=`<path d="M${-hw+6} ${ts+4}l3-5 3 5Z" fill="#7fd38f"/><circle cx="${-hw+9}" cy="${ts-7}" r="3" fill="#7fd38f" opacity=".7"/>`;
   return r+x}}
 </script>
 </body>
