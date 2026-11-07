@@ -2466,6 +2466,13 @@ function chatSend(t){t=String(t||'').replace(/\s+/g,' ').trim().slice(0,60);if(!
 {const _ne=netApplyEv;netApplyEv=function(e,from){if(e&&e.t==='chat'){const r=G2.p[from],n=(r&&r.name)||'שחקן',t=String(e.x||'').slice(0,60);chatLog().push({n,t,mine:0});if(G2.chat.length>60)G2.chat.shift();
   if(document.getElementById('chatp')){chatRender()}else{G2.unread=((G2.unread)|0)+1;chatBadge();toast(`💬 ${esc(n)}: ${esc(t)}`,'info')}sfx('pop');return}return _ne.apply(this,arguments)}}
 {const _h=hud;hud=function(){_h();try{const on=!!(G2&&G2.net&&G2.on&&S);let b=document.getElementById('chatbtn');if(on&&!b){b=document.createElement('button');b.id='chatbtn';b.setAttribute('aria-label','צ\'אט');b.style.cssText='position:fixed;right:10px;bottom:84px;z-index:70;width:48px;height:48px;border-radius:50%;border:0;background:#2a7fd9;color:#fff;font-size:22px;box-shadow:0 4px 14px rgba(0,0,0,.4);cursor:pointer';b.onclick=chatOpen;document.body.appendChild(b);chatBadge()}else if(!on&&b){b.remove();chatClose()}}catch(e){}}}
+
+// ===== v2.5.1: audio watchdog (resume after app switch / interruptions) =====
+{function wake(){try{const c=AU.ctx;if(!c||!AU.started)return;if(c.state==='closed'){AU.ctx=null;AU.started=false;AU.bus={};unlock();return}if(!document.hidden&&c.state!=='running')c.resume();applyVol()}catch(e){}}
+ setInterval(wake,1500);['focus','pageshow','resume','touchend','click'].forEach(e=>addEventListener(e,wake,{passive:true}));
+ document.addEventListener('visibilitychange',()=>{if(!document.hidden){setTimeout(wake,50);setTimeout(wake,600)}});
+ try{if(AU.ducks>0)setInterval(()=>{if(AU.ducks>0&&!(window.speechSynthesis&&speechSynthesis.speaking)){AU.ducks=0;applyVol()}},4000)}catch(e){}
+ setInterval(()=>{try{if(AU.ducks>0&&!(window.speechSynthesis&&speechSynthesis.speaking)){AU.ducks=0;applyVol()}}catch(e){}},4000)}
 </script>
 </body>
 </html>
