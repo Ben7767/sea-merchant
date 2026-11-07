@@ -836,18 +836,19 @@ async function goTrip(i){if(S.busy)return;const path=planRoute(S.loc,i);closeShe
  const b=$('stopTrip');if(b)b.remove();S.trip=null}
 // --- living sea: merchants and pirates sail the real lanes ---
 const TRAFFIC=[];let _warnAt=0;
+function trafWarn(now){const hot=new Set(TRAFFIC.filter(t=>t.kind=='p').map(t=>t.e));if(!S.busy&&!S.over&&now-_warnAt>25000){for(const i of hot){const e=ED[i];if(e[0]==S.loc||e[1]==S.loc){_warnAt=now;toast(`🏴‍☠️ שודדים נצפו בנתיב ${LOCS[e[0]]}–${LOCS[e[1]]}! כדאי לשכור משמר.`,'warn');sfx('drum');break}}}}
 function startTraffic(){const g=$('traf');if(!g)return;const all=ED.map((_,i)=>i),risky=all.filter(i=>ED[i][2]>=1.1);
  const mk=(kind,pool)=>({kind,e:pool[Math.floor(Math.random()*pool.length)],f:Math.random(),dir:Math.random()<.5?1:-1,sp:kind=='p'?11:15});
  for(let k=0;k<6;k++)TRAFFIC.push(mk('m',all));for(let k=0;k<3;k++)TRAFFIC.push(mk('p',risky));
  g.innerHTML=TRAFFIC.map((t,k)=>`<g id="tf${k}" class="tf" onclick="tfTap(${k})">${t.kind=='p'?'<circle r="13" class="tfr"/>':''}<text font-size="${t.kind=='p'?17:15}" text-anchor="middle" y="5">${t.kind=='p'?'🏴‍☠️':'🚢'}</text></g>`).join('');
  TRAFFIC.forEach((t,k)=>t.el=$('tf'+k));let last=performance.now();
- (function loop(now){const dt=Math.min(.1,(now-last)/1000);last=now;
+ let hotAt=0,drawAt=0;(function loop(now){const mb=$('mapbox');if(!mb||document.hidden||!mb.getClientRects().length){last=now;if(now-hotAt>1000){hotAt=now;trafWarn(now)}requestAnimationFrame(loop);return}if(now-drawAt<32){requestAnimationFrame(loop);return}drawAt=now;const dt=Math.min(.1,(now-last)/1000);last=now;
   TRAFFIC.forEach(t=>{const p=$('ed'+t.e);if(!p)return;const L=p._L||(p._L=p.getTotalLength());t.f+=t.dir*t.sp*dt/L;
    if(t.f>=1||t.f<=0){const node=t.f>=1?ED[t.e][1]:ED[t.e][0],opts=ED.map((e,i)=>i).filter(i=>(ED[i][0]==node||ED[i][1]==node)&&i!==t.e&&(t.kind=='m'||ED[i][2]>=1.1)),ne=opts.length?opts[Math.floor(Math.random()*opts.length)]:t.e;
     if(ne===t.e){t.dir*=-1;t.f=Math.max(0,Math.min(1,t.f))}else{t.e=ne;if(ED[ne][0]==node){t.dir=1;t.f=0}else{t.dir=-1;t.f=1}}}
    const q=$('ed'+t.e).getPointAtLength(Math.max(0,Math.min(1,t.f))*$('ed'+t.e).getTotalLength());t.el.setAttribute('transform',`translate(${q.x},${q.y})`)});
-  const hot=new Set(TRAFFIC.filter(t=>t.kind=='p').map(t=>t.e));ED.forEach((e,i)=>{const el=$('ed'+i);if(el)el.classList.toggle('hot',hot.has(i))});
-  if(!S.busy&&!S.over&&now-_warnAt>25000){for(const i of hot){const e=ED[i];if(e[0]==S.loc||e[1]==S.loc){_warnAt=now;toast(`🏴‍☠️ שודדים נצפו בנתיב ${LOCS[e[0]]}–${LOCS[e[1]]}! כדאי לשכור משמר.`,'warn');sfx('drum');break}}}
+  const hot=new Set(TRAFFIC.filter(t=>t.kind=='p').map(t=>t.e));if(now-hotAt>1000){hotAt=now;ED.forEach((e,i)=>{const el=$('ed'+i);if(el)el.classList.toggle('hot',hot.has(i))})}
+  trafWarn(now);
   requestAnimationFrame(loop)})(last)}
 function tfTap(k){const t=TRAFFIC[k],e=ED[t.e];t.kind=='p'?toast(`🏴‍☠️ ספינת שודדים סורקת את הנתיב ${LOCS[e[0]]}–${LOCS[e[1]]}. מי שיעבור שם עלול לפגוש אותה.`,'warn'):toast(`🚢 ספינת סוחרים בדרך בין ${LOCS[e[0]]} ל${LOCS[e[1]]}. אולי תפגוש אותה בים ותסחור איתה.`,'info')}
 function buildAmbient(){const g=$('amb');if(!g)return;g.innerHTML=`<g transform="translate(0,223)"><g class="amb1" style="cursor:pointer" onclick="toast('🚢 ספינת סוחרים חולפת באופק.','info')"><g transform="scale(.3)">${YS}</g></g></g><g transform="translate(0,221)"><g class="amb2" style="cursor:pointer" onclick="toast('🏴‍☠️ ספינת שודדים באופק! שמור על המטען.','warn');sfx('drum')"><g transform="scale(.27)">${PIRATE}</g></g></g>`}
