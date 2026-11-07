@@ -1558,7 +1558,7 @@ const AMK=['c','s','f'];
 function netEnc(){const m=ownMap(),me=G2.cur,out=[];Object.keys(m).forEach(k=>{const e=m[k];if(!e||e.o!==me)return;const a=AMK.reduce((x,q,i)=>x|((e.a&&e.a[q])?1<<i:0),0),st=e.st||{};
  const sig=[+k,e.r||0,a,e.m||0,e.f||0,e.w||0,st.g==null?-1:st.g,st.raw||0,st.proc||0,e.pd||0].join(',');if(e._sg!==sig){e._sg=sig;e.v=Date.now()}
  out.push([+k,e.r||0,a,e.m||0,e.f||0,e.w||0,st.g==null?-1:st.g,st.raw||0,st.proc||0,e.pd||0,e.v||0])});return out}
-function netSum(){const o=S;return{n:o.name,lv:o.lv||0,loc:o.loc,to:G2.to==null?-1:G2.to,day:o.day,rw:wealthOf(o),c:Math.round(o.cash),ov:o.over?1:0,sk:o.sunk?1:0,bk:o.bankrupt?1:0,pw:o.pw||0,rr:o.rr||0,gn:o.gun||0,bo:o.bo||0,cd:o.ct?o.ct.done:0,ri:Math.round(o.rentIn||0),pt:o.prodTotal||0,ns:Object.keys(o.seen||{}).length,sb:o.sabo?1:0}}
+function netSum(){const o=S;return{n:o.name,lv:o.lv||0,loc:o.loc,to:G2.to==null?-1:G2.to,day:o.day,rw:wealthOf(o),c:Math.round(o.cash),ov:o.over?1:0,sk:o.sunk?1:0,bk:o.bankrupt?1:0,pw:o.pw||0,rr:o.rr||0,gn:o.gun||0,bo:o.bo||0,cd:o.ct?o.ct.done:0,ri:Math.round(o.rentIn||0),pt:o.prodTotal||0,ns:Object.keys(o.seen||{}).length,sb:o.sabo?1:0,pg:G2.pg||0}}
 // ---- Firebase Realtime Database transport (REST + SSE) ----
 function mvFB(){return (typeof MV_FB==='string'&&MV_FB)?MV_FB.replace(/\/+$/,''):''}
 function FBRoom(base,code,me){
@@ -1610,7 +1610,7 @@ function netTick(){if(!G2||!G2.net||!NET||!NET.room||!NET.started)return;const m
   if(!pr||!pr.presence||pr.stale){R2.miss=(R2.miss||0)+1;if(R2.miss>(pr?1:4)&&!R2.over&&!R2.left&&G2.on){R2.left=true;R2.over=true;toast(`🚪 ${esc(R2.name)} עזב את המשחק.`,'warn');ch=true}return}
   R2.miss=0;if(R2.left){R2.left=false;R2.over=false;ch=true}
   const p=pr.presence,u=p.s||{};if(R2.loc!==u.loc||R2.to!==u.to||R2.day!==u.day||R2.rw!==u.rw)ch=true;
-  R2.name=u.n||R2.name;R2.lv=u.lv;R2.loc=u.loc;R2.to=u.to;R2.day=u.day;R2.rw=u.rw;R2.cash=u.c;R2.over=!!u.ov||!!R2.left;R2.sunk=!!u.sk;R2.bankrupt=!!u.bk;R2.pw=u.pw;R2.rr=u.rr;R2.gun=u.gn;R2.bo=u.bo;R2.ct={done:u.cd};R2.rentIn=u.ri;R2.prodTotal=u.pt;R2.seen=Object.fromEntries(Array.from({length:u.ns||0},(_,k)=>[k,1]));R2.sabo=!!u.sb;
+  R2.name=u.n||R2.name;R2.lv=u.lv;R2.loc=u.loc;R2.to=u.to;R2.day=u.day;R2.rw=u.rw;R2.cash=u.c;R2.over=!!u.ov||!!R2.left;R2.sunk=!!u.sk;R2.bankrupt=!!u.bk;R2.pw=u.pw;R2.rr=u.rr;R2.gun=u.gn;R2.bo=u.bo;R2.ct={done:u.cd};R2.rentIn=u.ri;R2.prodTotal=u.pt;R2.seen=Object.fromEntries(Array.from({length:u.ns||0},(_,k)=>[k,1]));R2.sabo=!!u.sb;if(u.pg&&u.pg!==0){if(!R2.pg||R2.pg[0]!==u.pg[0]||R2.pg[1]!==u.pg[1]){R2.pgT=Date.now()}R2.pg=u.pg}else R2.pg=null;
   try{netMerge(p.o||[],i)}catch(e){console.error(e)}
   NET.seen=NET.seen||{};(p.ev||[]).filter(e=>e.i>(NET.seen[i]||0)).forEach(e=>{NET.seen[i]=Math.max(NET.seen[i]||0,e.i);try{netApplyEv(e,i)}catch(er){console.error(er)}})});
  if(ch){try{mapUpdate();hud()}catch(e){}}
@@ -1659,7 +1659,7 @@ function netStop(){try{if(NET){clearInterval(NET.iv);clearInterval(NET.wait);if(
   Object.keys(G2.imp||{}).forEach(k=>G2.imp[k]=G2.imp[k].map(v=>1+(v-1)*.8));if(G2.burn)Object.keys(G2.burn).forEach(k=>{G2.burn[k][G2.cur]=(G2.burn[k][G2.cur]||0)*.85});
   if(S.bankrupt){S.over=1;netTell('fin',{k:'bankrupt'});netPush()}
   netPush();if(S.over&&G2.p.filter((p,i)=>i!==G2.cur).every(p=>p.over))return g2Final();if(S.over)draw()}finally{G2.ending=0}}}
-{const _s3=sail;sail=async function(d,pre){if(G2&&G2.net)G2.to=d;try{return await _s3(d,pre)}finally{if(G2&&G2.net){G2.to=-1;netPush()}}}}
+{const _s3=sail;sail=async function(d,pre){if(G2&&G2.net)G2.to=d;try{return await _s3(d,pre)}finally{if(G2&&G2.net){G2.to=-1;G2.pg=null;netPush()}}}}
 {const _t5=trade;trade=function(i,m){_t5(i,m);if(G2&&G2.net&&G2.imp&&G2.imp[S.loc])netTell('imp',{p:S.loc,a:G2.imp[S.loc].map(v=>+(+v).toFixed(3))})}}
 {const _a5=addRep;addRep=function(p,n,q){_a5(p,n,q);if(G2&&G2.net&&n<0)netTell('burn',{p,n:Math.abs(n)})}}
 {const _rh5=rivalHtml;rivalHtml=function(){if(G2&&G2.net){return g2rivs().map((i,k)=>{const o=G2.p[i];if(!o||o.over||o.left||o.loc==null||!SP[o.loc])return'';const a=SP[o.loc],b=(o.to>=0&&SP[o.to])?SP[o.to]:a,x=(a[2]+b[2])/2+20+k*14,y=(a[3]+b[3])/2-6;return `<g transform="translate(${x},${y}) scale(.3)"><g class="mb">${ship(o.lv||0,Object.assign({},G2COL[i]))}</g></g><text x="${x}" y="${y-20}" font-size="9" text-anchor="middle" font-weight="800" fill="#fff" stroke="#1b3a6b" stroke-width="2.6" paint-order="stroke">${esc(o.name)}</text>`}).join('')}return _rh5()}}
@@ -2380,6 +2380,20 @@ function boatF(){return 1-.25*upLv('boat')}
   if(fx>=1)x+=`<g transform="translate(${hw*.15},${tb-12})"><rect x="-6" y="0" width="12" height="8" rx="1.5" fill="#35684a" stroke="#143222"/><path d="M0 2V6M-2 4H2" stroke="#e8f6e8" stroke-width="1.4"/></g>`;
   if(fx>=3)x+=`<path d="M${-hw+6} ${ts+4}l3-5 3 5Z" fill="#7fd38f"/><circle cx="${-hw+9}" cy="${ts-7}" r="3" fill="#7fd38f" opacity=".7"/>`;
   return r+x}}
+
+// ===== v2.2: real-time rival ships on the map (online) =====
+{const _m=mset;mset=function(ei,f,rev){_m(ei,f,rev);try{if(G2&&G2.net&&NET&&NET.started){G2.pg=[ei,Math.round(f*1000)/1000,rev?1:0];const t=Date.now();if(!G2._pt||t-G2._pt>700){G2._pt=t;netPush()}}}catch(e){}}}
+{const NS='http://www.w3.org/2000/svg',cur={};
+ function rvLoop(){try{if(G2&&G2.net&&G2.p&&document.getElementById('map')&&typeof mpos==='function'){let g=document.getElementById('rvmap');if(!g){g=document.createElementNS(NS,'g');g.id='rvmap';g.style.pointerEvents='none';const ms=document.getElementById('ms');ms.parentNode.insertBefore(g,ms)}
+  const rs=g2rivs().filter(i=>{const o=G2.p[i];return o&&!o.over&&!o.left}),key=rs.join(',');
+  if(g._k!==key){g._k=key;g.innerHTML=rs.map(i=>{const col=(G2COL[i]||{}),c=col.flag||'#2a7fd9';return `<g id="rv${i}"><g class="rvf"><ellipse cy="6" rx="12" ry="2.4" fill="#06303f" opacity=".35"/><path d="M-10 -1H10L7 6H-7Z" fill="${col.hull||'#2b4a7a'}" stroke="#111" stroke-width="1"/><path d="M0 -15V-1" stroke="#222" stroke-width="1.4"/><path d="M1 -14Q9 -8 8 -3H1Z" fill="${col.sail||'#f4ead0'}" stroke="#555" stroke-width=".6"/><path d="M-1 -12Q-7 -8 -7 -3H-1Z" fill="${col.sail2||'#e2d6b4'}" stroke="#555" stroke-width=".6"/><path d="M0 -15l8 2-8 2Z" fill="${c}"/></g><text class="rvt" y="-20" font-size="11" font-weight="800" text-anchor="middle" fill="#fff" stroke="${c}" stroke-width="3" paint-order="stroke">${esc(G2.p[i].name||'')}</text></g>`}).join('')}
+  rs.forEach(i=>{const o=G2.p[i],el=document.getElementById('rv'+i);if(!el)return;let x,y,fl;const st=cur[i]||(cur[i]={});
+   if(o.pg&&o.pg[0]!=null&&document.getElementById('ed'+o.pg[0])){const ei=o.pg[0],tf=o.pg[1],rev=!!o.pg[2];if(st.ei!==ei||st.f==null||tf<st.f-.2)st.f=tf;st.ei=ei;const sp=Math.min(1,(Date.now()-(o.pgT||0))/1000);st.f+=(tf+.02*sp-st.f)*.08;const pt=mpos(ei,Math.max(0,Math.min(1,st.f)),rev);x=pt.x;y=pt.y-5;if(st.x!==undefined&&Math.abs(x-st.x)>.02)fl=x<st.x?-1:1;el.dataset.sail=1}
+   else{st.f=null;st.ei=null;const q=SP[o.loc];if(!q){el.style.display='none';return}el.style.display='';const k=rs.indexOf(i);x=q[2]+16+k*9;y=q[3]-18;el.dataset.sail=''}
+   st.x=x;el.style.display='';el.setAttribute('transform',`translate(${x},${y})`);if(fl){const f=el.firstChild;f.setAttribute('transform',fl<0?'scale(-1,1)':'scale(1,1)')}
+   const tx=el.querySelector('.rvt');if(tx)tx.textContent=(o.name||'')+(o.pg?' ⛵':'')})}else{const g=document.getElementById('rvmap');if(g&&g._k){g._k='';g.innerHTML=''}}}catch(er){}
+  requestAnimationFrame(rvLoop)}
+ requestAnimationFrame(rvLoop)}
 </script>
 </body>
 </html>
