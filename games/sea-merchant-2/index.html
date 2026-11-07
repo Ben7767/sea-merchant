@@ -730,6 +730,7 @@ const MM={
  port15:{n:'oud',sc:'pd',root:48,bpm:90,mel:[0,N0,N0,1,N0,4,N0,N0,5,N0,4,N0,1,N0,0,N0],bass:[0,N0,N0,N0,N0,N0,N0,N0,0,N0,N0,N0,N0,N0,N0,N0],pc:'D..TD.T.D..TD.T.'},
  sail:{n:'flute',sc:'pe',root:55,bpm:92,pad:1,mel:[0,N0,1,N0,2,N0,4,N0,3,N0,1,N0],bass:[0,N0,N0,N0,N0,N0,2,N0,N0,N0,N0,N0],pc:'D...k.k...k.'},
  tense:{n:'stab',sc:'ph',root:40,bpm:132,big:1,mel:[0,N0,N0,0,N0,N0,1,N0,0,N0,N0,0,N0,3,N0,1],bass:[0,N0,N0,N0,N0,N0,N0,N0,0,N0,N0,N0,N0,N0,N0,N0],pc:'D...D...D.D.D..D'},
+ menu:{n:'menu',menu:1,sc:'mi',root:50,bpm:92,mel:new Array(256).fill(null),bass:[],pc:''},
  storm:{n:'str',sc:'mi',root:38,bpm:88,pad:1,big:1,mel:[0,N0,N0,N0,N0,N0,N0,N0,1,N0,N0,N0,N0,N0,N0,N0],bass:[0,N0,N0,N0,N0,N0,N0,N0,0,N0,N0,N0,N0,N0,N0,N0],pc:'D.......D.D.....'}
 };
 const degS=(sc,d)=>{const n=sc.length,o=Math.floor(d/n);return sc[((d%n)+n)%n]+12*o};
@@ -746,13 +747,35 @@ function lead(n,f,t,sd){const B={bus:'music'};
  else if(n=='flute'){osc(f*2,t,sd*3.5,{...B,v:.08,a:.06,vib:[5,6],rev:.35});nz(t,sd*2,{...B,f:3200,q:2,v:.012,a:.04})}
  else if(n=='stab'){osc(f,t,.22,{...B,type:'sawtooth',v:.08,lp:1000,lpTo:250});osc(f*1.06,t,.22,{...B,type:'sawtooth',v:.07,lp:1000,lpTo:250})}
  else if(n=='str'){osc(f,t,sd*5,{...B,type:'sawtooth',v:.03,lp:800,a:.4,vib:[5,8],rev:.4});osc(f*1.5,t,sd*5,{...B,type:'sawtooth',v:.02,lp:800,a:.5,det:-8})}}
+
+
+/* ===== composed main-menu theme: 16 bars, D minor, intro -> theme -> lift -> reprise ===== */
+const MCH={Dm:[0,3,7],Bb:[-4,0,3],F:[3,7,10],C:[-2,2,5],Gm:[-7,-4,0],Am:[-5,-2,2]};
+const MPR=['Dm','Bb','F','C','Dm','Bb','F','C','Gm','Bb','C','Am','Dm','Bb','C','Dm'];
+const MA=[[[0,0,6],[6,2,2],[8,4,4],[12,3,2],[14,2,2]],[[0,2,6],[6,3,2],[8,5,4],[12,4,2],[14,3,2]],[[0,4,6],[6,2,2],[8,6,4],[12,5,2],[14,4,2]],[[0,3,4],[4,4,4],[8,2,4],[12,1,2],[14,0,2]]];
+const MA2=[[[0,4,6],[6,2,2],[8,7,4],[12,6,2],[14,4,2]],[[0,5,6],[6,4,2],[8,3,4],[12,2,2],[14,3,2]],[[0,4,8],[8,6,4],[12,5,2],[14,4,2]],[[0,3,4],[4,2,4],[8,1,4],[12,0,4]]];
+const MB=[[[0,7,4],[4,6,2],[6,5,2],[8,4,4],[12,5,4]],[[0,7,6],[6,8,2],[8,9,4],[12,7,4]],[[0,8,4],[4,6,4],[8,7,4],[12,8,4]],[[0,9,6],[6,8,2],[8,7,4],[12,4,4]]];
+const MEND=[MA[0],MA[1],[[0,6,4],[4,5,4],[8,4,4],[12,3,4]],[[0,0,16]]];
+function mflute(f,t,d,v,o){const B={bus:'music'};osc(f,t,d,{...B,v:v,a:.05,vib:[5,f*.006],rev:.35});osc(f*2,t,d*.8,{...B,type:'triangle',v:v*.25,a:.06,rev:.3});if(o)osc(f*.5,t,d,{...B,type:'triangle',v:v*.4,a:.08})}
+function mpluck(f,t,v){const B={bus:'music'};osc(f,t,.45,{...B,type:'triangle',v:v,rev:.25});osc(f,t,.2,{...B,type:'sawtooth',v:v*.45,lp:2400,lpTo:500})}
+function menuStep(M,i,t,sd){const vr=AU.vr||{off:0},off=Math.max(-2,Math.min(3,vr.off||0)),root=M.root+off,sc=SC.mi,pass=AU.loop,bar=Math.floor(i/16)%16,s=i%16,sec=Math.floor(bar/4),ch=MCH[MPR[bar]],melOn=pass>0||bar>=4;
+ const e=s/2;if(s%2===0){const pi=[0,1,2,1,0,1,2,1][e],f=mf(root+12+ch[pi]+(pi===2&&e===6?12:0));mpluck(f,t,bar<4&&pass==0?.055:.07)}
+ if(s===0){ch.forEach((x,j)=>osc(mf(root+x),t,sd*16*.96,{type:'sawtooth',v:.016,lp:700,a:sd*5,bus:'music',rev:.4,det:j*4-4}));const fb=mf(root+ch[0]-12);osc(fb,t,sd*7,{type:'triangle',v:.2,bus:'music'});osc(fb*2,t,sd*7,{v:.06,bus:'music'})}
+ if(s===8){const fb=mf(root+ch[0]-12+(ch[0]<-3?12:0));osc(fb,t,sd*7,{type:'triangle',v:.15,bus:'music'})}
+ if(melOn){const tbl=sec===0?MA:sec===1?MA2:sec===2?MB:MEND,notes=tbl[bar%4];for(const [st,dg,ln] of notes){if(st===s){const f=mf(root+12+degS(sc,dg)),d=ln*sd*1.05;
+   if(sec===2){mflute(f,t,d,.075,1);osc(f*1.003,t,d*.9,{type:'sawtooth',v:.022,lp:2600,lpTo:700,bus:'music',rev:.3})}
+   else{mflute(f,t,d,sec===1?.07:.075,sec===3)}
+   if(sec===3&&ln>=2)mpluck(f*2,t+sd*.02,.03)}}}
+ if(bar>=4||pass>0){if(s===0)perc(t,0);if(s===8)perc(t,0);if(s%4===2)perc2(t,sec>=2?.9:.6);if(sec>=2&&(s===4||s===12))osc(190,t,.16,{v:.16,to:90,bus:'music'});if(sec===2&&s%2===1&&s>6)perc2(t,.35)}
+ if(bar===15&&s===0)nz(t,sd*14,{type:'highpass',f:2500,q:.5,a:sd*8,v:.05,bus:'music'});if(bar===15&&s===12)osc(55,t,2.2,{v:.28,to:35,bus:'music'});
+ if(bar===3&&pass==0&&s===0)nz(t,sd*14,{type:'highpass',f:2200,to:5000,q:.5,a:sd*10,v:.035,bus:'music'})}
 const LEADS_P=['oud','saz','gtr','bz','man','acc','flute'],LEADS_S=['flute','gtr','man','acc'];
 function improv(mel,L){const out=[];let d=0;for(let k=0;k<L;k++){const m=mel[k];if(m==null){out.push(null);continue}const tgt=k>=L-3?0:m,st=[-2,-1,0,1,1,2][Math.floor(Math.random()*6)];d=Math.max(-2,Math.min(6,d+st+Math.sign(tgt-d)*(Math.random()<.5?1:0)));out.push(d)}return out}
 function mvary(M){const lp=AU.loop,L=M.mel.length,pool=/^port/.test(AU.mode)?LEADS_P:LEADS_S,v={inst:M.n,off:0,mel:M.mel,dens:2,perc:1};
  if(!M.big){v.dens=(lp>0&&lp%5===4)?0:(Math.random()<.3?1:2);if(lp>0&&Math.random()<.55)v.inst=pool[Math.floor(Math.random()*pool.length)];
   v.off=[0,0,0,2,-2,3,-3,5,-5][Math.floor(Math.random()*9)];if(Math.random()<.5)v.mel=improv(M.mel,L);v.perc=(v.dens===2&&lp%3!==1)?1:.35}
  AU.vr=v}
-function mstep(M,i,t,sd){const vr=AU.vr||(mvary(M),AU.vr),sc=SC[M.sc],mel=vr.mel,L=mel.length,k=i%L,lp=AU.loop,v=lp%4,CH=[0,3,4,0][v],root=M.root+vr.off,calm=!M.big;
+function mstep(M,i,t,sd){if(M.menu)return menuStep(M,i,t,sd);const vr=AU.vr||(mvary(M),AU.vr),sc=SC[M.sc],mel=vr.mel,L=mel.length,k=i%L,lp=AU.loop,v=lp%4,CH=[0,3,4,0][v],root=M.root+vr.off,calm=!M.big;
  let d=mel[v==3?L-1-k:k];
  if(d!=null){if(v==2)d+=2;if(Math.random()<.08)d+=Math.random()<.5?1:-1}
  else if(v==1&&k%2==0){const p=mel[(k+L-2)%L];if(p!=null&&Math.random()<.3)d=p+1}
@@ -785,7 +808,7 @@ const ARR=[['אלכסנדריה','עיר המגדלור והספרייה הגד�
 function arriveLine(d){const n=LOCS[d],f=ARR[d][1],k=Math.floor(Math.random()*3);return k==0?`הגענו ל${n}! ${f}`:k==1?`ברוכים הבאים ל${n}. ${f}`:`עוגנים ב${n}. ${f}`}
 // --- controls ---
 function unlock(){const c=A();if(!c)return;if(c.state!=='running')c.resume();
- if(!AU.started){AU.started=true;startAmb();clearInterval(AU.mt);AU.mt=setInterval(mtick,AU.lite?110:60);setMode('port'+S.loc);amb('port')}}
+ if(!AU.started){AU.started=true;startAmb();clearInterval(AU.mt);AU.mt=setInterval(mtick,AU.lite?110:60);setMode(S.started?'port'+S.loc:'menu');amb('port')}}
 ['pointerdown','touchstart','keydown'].forEach(e=>addEventListener(e,unlock,{passive:true}));
 addEventListener('pointerdown',ev=>{const b=ev.target.closest&&ev.target.closest('button,.pt,.dest');if(!b||b.disabled)return;sfx(b.closest('#tabs')?'tab':b.closest('#mapbox,.pt')?'sel':(Math.random()<.35?'wood':'tick'))},{passive:true});
 document.addEventListener('visibilitychange',()=>{const c=AU.ctx;if(!c||!AU.started)return;document.hidden?c.suspend():c.resume()});
@@ -926,7 +949,7 @@ function mainMenu(inGame){const au=ST.get('auto',null),nm=ST.get('name','');
  <div class="mrow"><button class="mb2" onclick="openScores()">🏆 שיאים</button><button class="mb2" onclick="openSettings()">⚙️ הגדרות</button></div>
  <div class="mrow"><button class="mb2" onclick="openHelp()">❓ איך משחקים</button>${inGame?'<button class="mb2" onclick="confirmNew()">🔄 משחק חדש</button>':'<button class="mb2" onclick="openAbout()">ℹ️ אודות</button>'}</div></div>`);
  o.style.background='none';const i=$('nm');if(i)i.addEventListener('keydown',e=>{if(e.key==='Enter')startNew()})}
-function startNew(){const i=$('nm'),name=((i&&i.value)||ST.get('name','')||'').trim().slice(0,14)||'סוחר';ST.set('name',name);closeOv();unlock();init();S.started=true;S.name=name;
+function startNew(){const i=$('nm'),name=((i&&i.value)||ST.get('name','')||'').trim().slice(0,14)||'סוחר';ST.set('name',name);closeOv();unlock();init();S.started=true;S.name=name;setMode('port'+S.loc);amb('port');
  say(`ברוך הבא, קפטן ${name}! שישה־עשר נמלים ממתינים לך.`);hud();tab('mk');toast(`⚓ ברוך הבא, קפטן ${esc(name)}! אלפיים מטבעות ו־30 ימים.`,'good');speak(`ברוך הבא, קפטן ${name}. ים התיכון מחכה לך.`,'joy');sfx('fanfare');draw()}
 function continueGame(){const sn=ST.get('auto',null);if(!sn)return;closeOv();unlock();applySnap(sn);toast(`⏩ המשחק נטען: יום ${S.day}, ${LOCS[S.loc]}`,'good');speak(`ברוך שובך, קפטן ${S.name}.`,'joy')}
 function confirmNew(){ov(`<div class="mcard"><h2>משחק חדש?</h2><p>ההתקדמות הנוכחית שלא נשמרה תאבד.</p><div class="mrow"><button class="mb2" style="background:#b3392b" onclick="closeOv();mainMenu(false)">כן, התחל מחדש</button><button class="mb2" onclick="mainMenu(true)">ביטול</button></div></div>`,'dim')}
