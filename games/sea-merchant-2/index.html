@@ -1196,7 +1196,7 @@ function zoomAnim(f){const c=$('mapbox'),s=$('map');if(!c||!s||!c.clientWidth)re
 buildMap();init();startTraffic();buildAmbient();mainMenu(false);
 
 // ===== MAP TEXT CLAMP =====
-function clampMapText(){const m=document.getElementById('map');if(!m||!m.clientWidth)return;const W=800,pad=6;let ok=true;
+function clampMapText(){const m=document.getElementById('map');if(!m||!m.clientWidth)return;const W=920,pad=6;let ok=true;
  m.querySelectorAll('#map > text,#map #pts text,#map > g:not([transform]):not([class]) > text').forEach(t=>{if(!t.hasAttribute('x')||t.closest('[transform]'))return;let b;try{b=t.getBBox()}catch(e){return}if(!b.width){ok=false;return}
   const x0=t._ox===undefined?(t._ox=+t.getAttribute('x')):t._ox;let dx=0;
   if(b.x<pad)dx=pad-b.x;else if(b.x+b.width>W-pad)dx=W-pad-(b.x+b.width);
