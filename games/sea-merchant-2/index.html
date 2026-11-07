@@ -1771,11 +1771,12 @@ async function paintStrokes(src,w,h,brushes,opts){opts=opts||{};const out=docume
  return out}
 const toBlob=(cv)=>new Promise(r=>cv.toBlob(r,'image/webp',.9));
 var NOBAKE=false;try{NOBAKE=/[?&#]nobake/.test(location.href)||(matchMedia('(hover:hover) and (pointer:fine)').matches&&!/Android/i.test(navigator.userAgent))}catch(e){}
-function bakePort(i){if(NOBAKE||PIMG[i]||PIMG['p'+i])return PBAKE;PIMG['p'+i]=1;PBAKE=PBAKE.then(async()=>{try{
+var NOPAINT=!/[?&#]paint/.test(location.href);
+function bakePort(i){if(NOPAINT||NOBAKE||PIMG[i]||PIMG['p'+i])return PBAKE;PIMG['p'+i]=1;PBAKE=PBAKE.then(async()=>{try{
   await bkY(1);const g=paintPort(i);const W=1000,H=270;const doc='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 216" width="'+W+'" height="'+H+'"><defs>'+DABDEF+'</defs>'+g+'</svg>';
   const im=new Image();await new Promise((res,rej)=>{im.onload=res;im.onerror=rej;im.src='data:image/svg+xml;base64,'+btoa(unescape(encodeURIComponent(doc)))});
   const cs=document.createElement('canvas');cs.width=W;cs.height=H;cs.getContext('2d').drawImage(im,0,0,W,H);
-  const out=await paintStrokes(cs,W,H,[10,5.5,3.4],{seed:i+1,thr:1.1,flat:-.5});await bkY(1);
+  const out0=await paintStrokes(cs,W,H,[10,5.5,3.4],{seed:i+1,thr:1.1,flat:-.5});await bkY(1);const out=document.createElement('canvas');out.width=W;out.height=H;{const fc=out.getContext('2d');fc.filter='contrast(1.22) saturate(1.35) brightness(.97)';fc.drawImage(out0,0,0);fc.filter='none'}
   const rh=90,rs=document.createElement('canvas');rs.width=W;rs.height=rh;const rc=rs.getContext('2d');for(let y=0;y<rh;y++){const sy=H-1-Math.floor(y*1.15),off=Math.sin(y*.55+i)*(2+y*.07);rc.drawImage(out,0,sy,W,1,off,y,W,1)}
   rc.globalCompositeOperation='destination-in';const gr=rc.createLinearGradient(0,0,0,rh);gr.addColorStop(0,'rgba(0,0,0,.62)');gr.addColorStop(1,'rgba(0,0,0,0)');rc.fillStyle=gr;rc.fillRect(0,0,W,rh);
   rc.globalCompositeOperation='source-over';await bkY(1);{const hd='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 72" width="'+W+'" height="'+rh+'">'+harborSVG(i)+'</svg>';const hi=new Image();await new Promise((res,rej)=>{hi.onload=res;hi.onerror=rej;hi.src='data:image/svg+xml;base64,'+btoa(unescape(encodeURIComponent(hd)))});rc.drawImage(hi,0,0,W,rh)}
