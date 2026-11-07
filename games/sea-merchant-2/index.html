@@ -503,10 +503,13 @@ async function pirateEnd(k){const pr=$('pr');if(k!='leave'){sfx('cannon');sfx('c
  else if(k=='lose'){sfx('defeat',.2);sfx('creak',.2);$('bob').classList.add('hit');await sleep(900);$('bob').classList.remove('hit')}
  else{pr.style.transition='transform 1.5s ease-in';pr.style.transform='translate(1000px,240px)';await sleep(1400)}
  await sleep(500);$('fx').innerHTML='';setMode('sail');amb('sail')}
+function ransomVal(){let v=0;GOODS.forEach((g,gi)=>{const q=S.cargo[g.k]||0;v+=q*Math.max(1,Math.floor((S.prices[gi]||1)*.5))});return v}
+function ransomOk(tr){return S.cash+S.bank+ransomVal()>=tr}
+function ransomPay(tr){if(!ransomOk(tr))return 0;let due=tr,x=Math.min(S.cash,due);S.cash-=x;due-=x;x=Math.min(S.bank,due);S.bank-=x;due-=x;let cg=0;GOODS.forEach((g,gi)=>{if(due<=0)return;const q=S.cargo[g.k];if(!q)return;const val=Math.max(1,Math.floor((S.prices[gi]||1)*.5)),need=Math.min(q,Math.ceil(due/val));S.cargo[g.k]-=need;due-=need*val;cg=1});return cg?2:1}
 async function evPirate(n){setMode('tense');amb('cut');sfx('warn');await pirateIn();await banner('שודדי ים!',700);await cutscene(n);
  let w=Math.min(.97,.25+.1*n+gunWin());const tr=Math.round(wealth()*.1);
- const c=await choose('🏴‍☠️ שודדי ים!',`ספינת שודדים חוסמת את הדרך. איתך ${n} ספינות משמר.`,[['⚔️ להילחם',`סיכוי ניצחון ${Math.round(w*100)}%`],['💰 לשלם כופר',fmt(tr)],['🏃 לברוח',Math.round((.45+gunEsc())*100)+'% הצלחה']]);
- if(c==1){S.cash=Math.max(0,S.cash-tr);say(`שילמת כופר של ${fmt(tr)} והשודדים נעלמו.`);return pirateEnd('leave')}
+ const c=await choose('🏴‍☠️ שודדי ים!',`ספינת שודדים חוסמת את הדרך. איתך ${n} ספינות משמר.`,[['⚔️ להילחם',`סיכוי ניצחון ${Math.round(w*100)}%`],['💰 לשלם כופר',ransomOk(tr)?fmt(tr):fmt(tr)+' · אין מספיק כסף!'],['🏃 לברוח',Math.round((.45+gunEsc())*100)+'% הצלחה']]);
+ if(c==1){const rr=ransomPay(tr);if(rr){say(`שילמת כופר של ${fmt(tr)}${rr==2?' (כולל מטען)':''} והשודדים נעלמו.`);return pirateEnd('leave')}say('אין לך מספיק כדי לשלם כופר, והשודדים תוקפים!','bad');w-=.1}
  if(c==2){if(Math.random()<.45+gunEsc()){say('הצלחת לברוח מהשודדים!','good');return pirateEnd('leave')}say('הבריחה נכשלה! הקרב בלתי נמנע.','bad');w-=.1}
  if(Math.random()<w){const r=Math.round(wealth()*R(.08,.16)*(1+n*.03)*(1+.12*gunLv()));S.cash+=r;S.pw=(S.pw||0)+1;say(`ניצחת את השודדים! שלל: ${fmt(r)}.`,'good');await pirateEnd('win')}
  else{lose(.5);const l=Math.round(S.cash*.4);S.cash-=l;say(`השודדים ניצחו. איבדת חצי מהמטען ו־${fmt(l)}.`,'bad');await pirateEnd('lose')}}
