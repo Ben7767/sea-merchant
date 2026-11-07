@@ -1614,6 +1614,7 @@ function netTick(){if(!G2||!G2.net||!NET||!NET.room||!NET.started)return;const m
   try{netMerge(p.o||[],i)}catch(e){console.error(e)}
   NET.seen=NET.seen||{};(p.ev||[]).filter(e=>e.i>(NET.seen[i]||0)).forEach(e=>{NET.seen[i]=Math.max(NET.seen[i]||0,e.i);try{netApplyEv(e,i)}catch(er){console.error(er)}})});
  if(ch){try{mapUpdate();hud()}catch(e){}}
+ if(G2.on){const o0=G2.p.filter((p,i)=>i!==me);if(!S.over&&o0.length&&NET.tk>25&&o0.every(p=>p.left||p.bankrupt||p.sunk)){G2._gone=(G2._gone||0)+1;if(G2._gone>=5){toast('🏆 כל היריבים עזבו. אתה המנצח!','good');g2Final();NET.tk=(NET.tk||0)+1;return}}else G2._gone=0}
  if(G2.on){const others=G2.p.filter((p,i)=>i!==me);if(S.over&&others.every(p=>p.over))g2Final();else if(G2.p.length===2&&others[0].bankrupt&&!S.over)g2Final();else if(S.over&&NET.tk%4===0){try{draw()}catch(e){}}}
  NET.tk=(NET.tk||0)+1;netPush()}
 // ---- lobby ----
